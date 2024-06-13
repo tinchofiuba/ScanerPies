@@ -5,10 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from funcionesPie import InicioTalon,norma,generacionLinea,medicionPerimetro,PolyAjuste
 
-def func(data, a, b, c):
-    x, y = data
-    return a*x + b*y + c
-
 #defino variables a utilizar
 lZmin=[]
 lZmax=[]
@@ -105,10 +101,10 @@ df['TAMAÑO']=tamañoDato
 # #fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 
 df=df.round(1)
-listaAjuste=PolyAjuste(df,arrayEntradaPie,grado=5,paso=2,plano='ZX') 
-for v1 in listaAjuste:
-    for v2 in v1:
-        df=pd.concat([df,v2],ignore_index=True)
+listaAjuste=PolyAjuste(df,arrayEntradaPie,grado=10,paso=2,plano='ZX') 
+for v in listaAjuste:
+    df=pd.concat([df,v],ignore_index=True)
+
 '''
 dfAJ=pd.DataFrame(listaAjuste,scolumns=xyz)
 dfAJ['TIPO']='AJUSTADO'
@@ -171,9 +167,9 @@ dfFinal2Csup=pd.concat([dfFinal2Csup,dfFinal2CsupAjustado],ignore_index=True)
 #dfFinalb=dfFinal[dfFinal['X']>arrayEntradaPie[0]]
 #df=pd.concat([df,dfPromedio],ignore_index=True)
 dfjuntado=pd.concat([df1Sup,df1Inf],ignore_index=True)
-'''
+
 fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-'''
+
 # for key, dfcurva in dictlargos.items():
 #     fig.add_trace(go.Scatter3d(x=dfcurva['X'], y=dfcurva['Y'], z=dfcurva['Z'], mode='lines', name=key,line=dict(color='red', width=4)))
 # for i in range(2):
@@ -181,9 +177,10 @@ fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 #     fig.add_trace(go.Scatter3d(x=dictlargos['PMaxM']['X'], y=dictlargos['PMaxM']['Y'], z=dictlargos['PMaxM']['Z'], mode='lines', name='PMaxM',line=dict(color='red', width=4)))
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
 fig.show()
-#fig.write_html("plot.html")'''
+#fig.write_html("plot.html")
+
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-fig.show()
+fig.show()'''
 
 
 

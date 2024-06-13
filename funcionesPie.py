@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     df_y=df[df['Y']<limiteY/2]
@@ -86,39 +88,54 @@ def PolyAjuste(df,punto,**kwargs):
       grado=5
   dfAjuste=df[(df[ultimaCoord]>punto[1]-paso) &(df[ultimaCoord]<punto[1]+paso)]
   dfAjuste[ultimaCoord]=punto[1]
-  dfAjuste['TIPO']='APROX'
-  dfAjuste['TAMAÑO']=11
+  dfAjuste['TIPO']='DATO'
+  dfAjuste['TAMAÑO']=12
   df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[0])]
   df2=dfAjuste[(dfAjuste[avanceRecta]<punto[0])]
   dfs=[df1,df2]
   cuadrantes=[]
+  cuadSupInf=[]
+  #grafico df1 solamente
+  #guardo en un txt a df1
+  df1.to_csv('df1.csv',sep=',',index=False)
+  #plt.plot(df1[avanceRecta],df1[avance],label='df1')
+  #plt.show()
   for i in range(2):
     DF=dfs[i]
     if i==0:
       maxMin_AvRecta=DF[avanceRecta].max()
     else:
       maxMin_AvRecta=DF[avanceRecta].min()
-    maxAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].max() #me quedo con el cuadrante superior
-    DFsup=DF[DF[avance]>=maxAv]
-    DFinf=DF[DF[avance]<maxAv]
-    cuadSupInf=[DFsup,DFinf]
-    lAjuste=[]
-    for i in range(2):
-      avRectaSup=cuadSupInf[i][avanceRecta]
-      avanceSup=cuadSupInf[i][avance]
-      coef=np.polyfit(avRectaSup,avanceSup,grado)
-      pSup=np.poly1d(coef)
-      avRectaAj=np.arange(avRectaSup.min(),avRectaSup.max(),0.1)
-      avanceAj=pSup(avRectaAj)
-      #creo un dataframe con columnas X,Y,Z y coloco todo el vector avRectaAj como X, avanceAj como Z y punto[1] como Y
-      dfAjuste=pd.DataFrame(columns=columnas)
-      dfAjuste[avanceRecta]=avRectaAj
-      dfAjuste[avance]=avanceAj
-      dfAjuste[ultimaCoord]=punto[1]
-      dfAjuste['TIPO']='APROX'
-      dfAjuste['TAMAÑO']=13
-      lAjuste.append(dfAjuste)
-    cuadrantes.append(lAjuste)
+    minAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].min()
+    print(f"minimo Z: {minAv} para {i} si es 0 es mayor al X")
+    DFsup=DF[DF[avance]>=minAv]
+    DFinf=DF[DF[avance]<=minAv]
+    cuadSupInf.append([DFsup,DFinf])
+  DFsup=pd.concat([cuadSupInf[0][0],cuadSupInf[1][0]],ignore_index=True)
+  DFinf=pd.concat([cuadSupInf[0][1],cuadSupInf[1][1]],ignore_index=True)
+  cuadSupInf=[DFsup,DFinf]
+  lAjuste=[]
+  for i in range(2):
+    avRectaCombo=cuadSupInf[i][avanceRecta]
+    avanceCombo=cuadSupInf[i][avance]
+    coef=np.polyfit(avRectaCombo,avanceCombo,grado)
+    pSup=np.poly1d(coef)
+    avRectaAj=np.arange(avRectaCombo.min(),avRectaCombo.max()+0.1,0.1)
+    avanceAj=pSup(avRectaAj)
+    #creo un dataframe con columnas X,Y,Z y coloco todo el vector avRectaAj como X, avanceAj como Z y punto[1] como Y
+    dfAjustePoly=pd.DataFrame(columns=columnas)
+    dfAjustePoly[avanceRecta]=avRectaAj
+    dfAjustePoly[avance]=avanceAj
+    dfAjustePoly[ultimaCoord]=punto[1]
+    dfAjustePoly['TIPO']='APROX'
+    dfAjustePoly['TAMAÑO']=13
+    print(dfAjustePoly.head(20))
+    print(dfAjustePoly.tail(20))
+    dfAjustePoly=pd.concat([dfAjustePoly,dfAjuste],ignore_index=True)
+    fig=px.scatter_3d(dfAjustePoly,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+    fig.show()
+    cuadrantes.append(dfAjuste)
   return cuadrantes
 
  
