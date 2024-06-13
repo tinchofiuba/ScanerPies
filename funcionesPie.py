@@ -66,24 +66,12 @@ def Minimos(listaMin):
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 #--------------------------------------------------------------
-def medidaPerimetral(df,punto,**kwargs):
-  coord='XYZ'
-  columnas=['X','Y','Z']
-  #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
-  if 'paso' in kwargs:
-    paso=kwargs['paso']
+def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
+  #si puntos es una lista, me quedo con el primer punto
+  if type(puntos)==list:
+    punto=puntos[0]
   else:
-    paso=0
-  if 'plano' in kwargs:
-    avance=kwargs['plano'][0]
-    avanceRecta=kwargs['plano'][1]
-    for i in range(2):
-      coord=coord.replace(kwargs['plano'][i],'')
-    ultimaCoord=coord
-  if 'grado' in kwargs:
-    grado=kwargs['grado']
-  else:
-    grado=4
+    punto=puntos
   #falta ver el tema de la coordenada!
   cuadSupInf=[]
   dfLonja=df[(df[ultimaCoord]>punto[ultimaCoord]-paso) &(df[ultimaCoord]<punto[ultimaCoord]+paso)]
@@ -115,6 +103,40 @@ def medidaPerimetral(df,punto,**kwargs):
   #fig.show()
   return dfLonja
 
+def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
+  puntoIni=puntos[0]
+  puntoFin=puntos[1]
+  m=(puntoFin[ultimaCoord]-puntoIni[ultimaCoord])/(puntoFin[avanceRecta]-puntoIni[avanceRecta])
+  m=m.iloc[0] 
+  b=puntoIni[ultimaCoord]-m*puntoIni[avanceRecta]
+  b=b.iloc[0]
+  #obtengo los puntos de la recta desde el Yinicial hasta el Yfinal con un paso en Y de 0.1
+  #y con esto obtengo los puntos de la recta
+  ordenadas=np.linspace(puntoIni[ultimaCoord],puntoFin[ultimaCoord],int(abs(puntoFin[ultimaCoord]-puntoIni[ultimaCoord])*10))
+  ordenadas=np.round(ordenadas,1)
+  print(puntoIni[ultimaCoord],puntoFin[ultimaCoord])
+  print(ordenadas)
+def medidaPerimetral(df,puntos,**kwargs):
+  coord='XYZ'
+  columnas=['X','Y','Z']
+  #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
+  if 'paso' in kwargs:
+    paso=kwargs['paso']
+  else:
+    paso=0
+  if 'plano' in kwargs:
+    avance=kwargs['plano'][0]
+    avanceRecta=kwargs['plano'][1]
+    for i in range(2):
+      coord=coord.replace(kwargs['plano'][i],'')
+    ultimaCoord=coord
+    if 'diagonal' in kwargs:
+      return funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas) 
+      pass
+    else: #si no es diagonal es en un plano horizontal o vertical
+      return funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas)
+    
+  
 def PolyAjuste(df,punto,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
@@ -158,7 +180,6 @@ def PolyAjuste(df,punto,**kwargs):
     for j in range(2):
       dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
       perim=perim+dist.sum()
-  print(f'Perimetro cuadrante {i+1}: {perim}')
   #concateno los 4 df que estan en cuadSupInf
   dfPlot=pd.concat([cuadSupInf[0][0],cuadSupInf[0][1],cuadSupInf[1][0],cuadSupInf[1][1]],ignore_index=True)
   fig=px.scatter_3d(dfPlot,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)

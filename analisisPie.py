@@ -39,6 +39,14 @@ miny=df['Y'].min()
 maxy=df['Y'].max()
 minz=df['Z'].min()
 maxz=df['Z'].max()
+maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
+maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
+iniMetaTarso=[minx,maxyMetatarzoIn,maxzMetatarzoIn]#<--------------------vector inicio del metatarzo, izquierda
+maxyMetatarsoFin=df[df['X']==maxx]['Y'].max()
+maxzMetatarsoFin=df[(df['X']==maxx) & (df['Y']==maxyMetatarsoFin)]['Z'].max()
+finMetaTarso=[maxx,maxyMetatarsoFin,maxzMetatarsoFin]#<--------------------vector fin del metatarzo, derecha
+dfInMetaTarso=pd.DataFrame([iniMetaTarso],columns=xyz)
+dfFinMetaTarso=pd.DataFrame([finMetaTarso],columns=xyz)
 #------------------------------------------------------------------------------
 AlturaMaxTalon=df[df['Y']==miny]['Z'].min().round(1)
 dfMedicion.at[0,'Altura máxima del talón [mm]']=AlturaMaxTalon
@@ -81,6 +89,9 @@ df=pd.concat([df,dfAlturaTalon],ignore_index=True)
 
 df=df.round(1)
 dfCircEntrPie=medidaPerimetral(df,arrayEntradaPie,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
+dfcircMetaTarso=medidaPerimetral(df,[dfInMetaTarso,dfFinMetaTarso],diagonal=True,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
+
+
 
 '''
 fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
