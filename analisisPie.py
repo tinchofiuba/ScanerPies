@@ -45,6 +45,8 @@ distanciaTobillo=np.abs(dfLandmarks.iloc[1]['X']-dfLandmarks.iloc[2]['X'])#<----
 LargoPie=maxy-miny
 AnchoPie=maxx-minx
 arrayEntradaPie=dfLandmarks.iloc[11]#<--------------------array entradaPie
+print(type(arrayEntradaPie))
+
 # arrayCentroTobillo=dfLandmarks.iloc[12]
 # distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón
 # yInicioTalon,zInicioTalon=InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,arrayCentroTobillo['Y'])
@@ -101,16 +103,13 @@ df['TAMAÑO']=tamañoDato
 # #fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 
 df=df.round(1)
-listaAjuste=PolyAjuste(df,arrayEntradaPie,grado=10,paso=2,plano='ZX') 
-for v in listaAjuste:
-    df=pd.concat([df,v],ignore_index=True)
+dfLonja=PolyAjuste(df,arrayEntradaPie,paso=0.4,plano='ZX') 
 
 '''
 dfAJ=pd.DataFrame(listaAjuste,scolumns=xyz)
 dfAJ['TIPO']='AJUSTADO'
 dfAJ['TAMAÑO']=tamañoDato
 df=pd.concat([df,dfAJ],ignore_index=True)
-
 
 print(len(df1Sup))
 zmaxdfFinal=dfFinal['Z'].max()

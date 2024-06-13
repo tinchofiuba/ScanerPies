@@ -69,37 +69,33 @@ def Minimos(listaMin):
 def PolyAjuste(df,punto,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
-  for key, value in kwargs.items():
-    if key=='plano':
-      avance=value[0]
-      avanceRecta=value[1]
-      #le saco "X" a coord (XYZ)
-      for i in range(2):
-        coord=coord.replace(value[i],'')
-      ultimaCoord=coord #me quedo con la coordenada que no se eligió en el plano.
-      #{ejecucion de la funcion}
-    if key=='paso': #seteo el paso +- del corte 
-      paso=value
-    else:
-      paso=0.5
-    if key=='grado':
-      grado=value
-    else:
-      grado=5
-  dfAjuste=df[(df[ultimaCoord]>punto[1]-paso) &(df[ultimaCoord]<punto[1]+paso)]
-  dfAjuste[ultimaCoord]=punto[1]
+  #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
+  if 'paso' in kwargs:
+    paso=kwargs['paso']
+  else:
+    paso=0
+  if 'plano' in kwargs:
+    avance=kwargs['plano'][0]
+    avanceRecta=kwargs['plano'][1]
+    for i in range(2):
+      coord=coord.replace(kwargs['plano'][i],'')
+    ultimaCoord=coord
+  if 'grado' in kwargs:
+    grado=kwargs['grado']
+  else:
+    grado=4
+  #falta ver el tema de la coordenada!
+  dfLonja=df[(df[ultimaCoord]>punto[ultimaCoord]-paso) &(df[ultimaCoord]<punto[ultimaCoord]+paso)]
+  dfLonja[ultimaCoord]=punto[1]
+  dfAjuste=dfLonja.copy() 
   dfAjuste['TIPO']='DATO'
   dfAjuste['TAMAÑO']=12
-  df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[0])]
-  df2=dfAjuste[(dfAjuste[avanceRecta]<punto[0])]
+  df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[avanceRecta])]
+  df2=dfAjuste[(dfAjuste[avanceRecta]<punto[avanceRecta])]
   dfs=[df1,df2]
   cuadrantes=[]
   cuadSupInf=[]
-  #grafico df1 solamente
-  #guardo en un txt a df1
-  df1.to_csv('df1.csv',sep=',',index=False)
-  #plt.plot(df1[avanceRecta],df1[avance],label='df1')
-  #plt.show()
+  perim=0
   for i in range(2):
     DF=dfs[i]
     if i==0:
@@ -107,22 +103,19 @@ def PolyAjuste(df,punto,**kwargs):
     else:
       maxMin_AvRecta=DF[avanceRecta].min()
     minAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].min()
-    print(f"minimo Z: {minAv} para {i} si es 0 es mayor al X")
-    DFsup=DF[DF[avance]>=minAv]
-    DFinf=DF[DF[avance]<=minAv]
+    DFsup=DF[DF[avance]>=minAv].sort_values(by=[avanceRecta,avance])
+    DFinf=DF[DF[avance]<=minAv].sort_values(by=[avanceRecta,avance])
     cuadSupInf.append([DFsup,DFinf]) #guardo 1°cuadrante, 2°cuadrante si i=0 sino 3° y 4°
-    fig=px.scatter_3d(cuadSupInf[0][0],x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-    fig.show()
-  DFsup=pd.concat([cuadSupInf[0][0],cuadSupInf[1][0]],ignore_index=True)
-  DFinf=pd.concat([cuadSupInf[0][1],cuadSupInf[1][1]],ignore_index=True)
-  cuadSupInf=[DFsup,DFinf]
-  lAjuste=[]
-  for i in range(2):
-    avRectaCombo=cuadSupInf[i][avanceRecta]
-    avanceCombo=cuadSupInf[i][avance]
-    cuadrantes.append(dfAjuste)
-  return cuadrantes
+    for j in range(2):
+      dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
+      perim=perim+dist.sum()
+  print(f'Perimetro cuadrante {i+1}: {perim}')
+  #concateno los 4 df que estan en cuadSupInf
+  dfPlot=pd.concat([cuadSupInf[0][0],cuadSupInf[0][1],cuadSupInf[1][0],cuadSupInf[1][1]],ignore_index=True)
+  fig=px.scatter_3d(dfPlot,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+  fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+  fig.show()
+  return dfLonja
 
  
 
