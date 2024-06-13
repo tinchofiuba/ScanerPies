@@ -11,6 +11,8 @@ lZmax=[]
 lYmin=[]
 lYmax=[]
 xyz=["X","Y","Z"]
+colMedicion=['Altura máxima del talón [mm]','Largo del pie [mm]','Ancho total del pie [mm]','Altura entrada del pie [mm]','Distancia entrada del pie - talón [mm]','Distancia entrada del pie - inicio talón [mm]']
+dfMedicion=pd.DataFrame(columns=colMedicion)
 tamañoDato=8
 tamañoLandmark=8
 indice=0
@@ -38,27 +40,27 @@ maxy=df['Y'].max()
 minz=df['Z'].min()
 maxz=df['Z'].max()
 #------------------------------------------------------------------------------
-AlturaMaxTalon=df[df['Y']==miny]['Z'].min().round(1) 
+AlturaMaxTalon=df[df['Y']==miny]['Z'].min().round(1)
+dfMedicion.at[0,'Altura máxima del talón [mm]']=AlturaMaxTalon
+print(dfMedicion['Altura máxima del talón [mm]'])
 xAlturaMaxTalon=df[(df['Z']==AlturaMaxTalon) & (df['Y']==miny)]['X'].mean()
 arrayAlturaTalon=[xAlturaMaxTalon,0,AlturaMaxTalon]#<--------------------array alturaTalon
 distanciaTobillo=np.abs(dfLandmarks.iloc[1]['X']-dfLandmarks.iloc[2]['X'])#<--------------------largo del ancho del tobillo
 LargoPie=maxy-miny
+dfMedicion.at[0,'Largo del pie [mm]']=LargoPie
 AnchoPie=maxx-minx
+dfMedicion.at[0,'Ancho total del pie [mm]']=AnchoPie
 arrayEntradaPie=dfLandmarks.iloc[11]#<--------------------array entradaPie
-print(type(arrayEntradaPie))
+dfMedicion.at[0,'Altura entrada del pie [mm]']=arrayEntradaPie['Z']
+arrayCentroTobillo=dfLandmarks.iloc[12]
+distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón
+dfMedicion.at[0,'Distancia entrada del pie - talón [mm]']=np.round(distanciaEntrada_Talon,1)
+yInicioTalon,zInicioTalon=InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,arrayCentroTobillo['Y'])
+arrayInicioTalon=[xAlturaMaxTalon,yInicioTalon,zInicioTalon]#<--------------------array arrayInicioTalon
+distanciaEntrada_IniciTalon=norma(arrayEntradaPie,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
+dfMedicion.at[0,'Distancia entrada del pie - inicio talón [mm]']=np.round(distanciaEntrada_IniciTalon,1)
+dfMedicion.to_csv('Mediciones.csv',index=False)
 
-# arrayCentroTobillo=dfLandmarks.iloc[12]
-# distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón
-# yInicioTalon,zInicioTalon=InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,arrayCentroTobillo['Y'])
-# arrayInicioTalon=[xAlturaMaxTalon,yInicioTalon,zInicioTalon]#<--------------------array arrayInicioTalon
-# distanciaEntrada_IniciTalon=norma(arrayEntradaPie,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
-# print(f'Distancia Entrada de pie - inicio talon: {distanciaEntrada_IniciTalon}mm')
-# print(f'Ancho de tobillo: {distanciaTobillo}mm')
-# print(f'Distancia Entrada de pie - talon: {distanciaEntrada_Talon}mm')
-# print(f'Largo del pie: {LargoPie}mm')
-# print(f'Ancho del pie: {AnchoPie}mm')
-# ###############################################################
-# #--------------------------------------------------------------
 df['TIPO']='DATO'
 df['TAMAÑO']=tamañoDato
 # #--------------------------------------------------------------
@@ -103,7 +105,7 @@ df['TAMAÑO']=tamañoDato
 # #fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 
 df=df.round(1)
-dfLonja=PolyAjuste(df,arrayEntradaPie,paso=0.4,plano='ZX') 
+dfCircEntrPie=PolyAjuste(df,arrayEntradaPie,paso=0.4,plano='ZX') 
 
 '''
 dfAJ=pd.DataFrame(listaAjuste,scolumns=xyz)
