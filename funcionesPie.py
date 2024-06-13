@@ -64,9 +64,63 @@ def Minimos(listaMin):
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 #--------------------------------------------------------------
-def PolyAjuste(df,orden,punto,**kwargs):
-   for key, value in kwargs.items():
-      print(f'{key} = {value}')
+def PolyAjuste(df,punto,**kwargs):
+  coord='XYZ'
+  columnas=['X','Y','Z']
+  for key, value in kwargs.items():
+    if key=='plano':
+      avance=value[0]
+      avanceRecta=value[1]
+      #le saco "X" a coord (XYZ)
+      for i in range(2):
+        coord=coord.replace(value[i],'')
+      ultimaCoord=coord #me quedo con la coordenada que no se eligió en el plano.
+      #{ejecucion de la funcion}
+    if key=='paso': #seteo el paso +- del corte 
+      paso=value
+    else:
+      paso=0.5
+    if key=='grado':
+      grado=value
+    else:
+      grado=5
+  dfAjuste=df[(df[ultimaCoord]>punto[1]-paso) &(df[ultimaCoord]<punto[1]+paso)]
+  dfAjuste[ultimaCoord]=punto[1]
+  dfAjuste['TIPO']='APROX'
+  dfAjuste['TAMAÑO']=11
+  df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[0])]
+  df2=dfAjuste[(dfAjuste[avanceRecta]<punto[0])]
+  dfs=[df1,df2]
+  cuadrantes=[]
+  for i in range(2):
+    DF=dfs[i]
+    if i==0:
+      maxMin_AvRecta=DF[avanceRecta].max()
+    else:
+      maxMin_AvRecta=DF[avanceRecta].min()
+    maxAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].max() #me quedo con el cuadrante superior
+    DFsup=DF[DF[avance]>=maxAv]
+    DFinf=DF[DF[avance]<maxAv]
+    cuadSupInf=[DFsup,DFinf]
+    lAjuste=[]
+    for i in range(2):
+      avRectaSup=cuadSupInf[i][avanceRecta]
+      avanceSup=cuadSupInf[i][avance]
+      coef=np.polyfit(avRectaSup,avanceSup,grado)
+      pSup=np.poly1d(coef)
+      avRectaAj=np.arange(avRectaSup.min(),avRectaSup.max(),0.1)
+      avanceAj=pSup(avRectaAj)
+      #creo un dataframe con columnas X,Y,Z y coloco todo el vector avRectaAj como X, avanceAj como Z y punto[1] como Y
+      dfAjuste=pd.DataFrame(columns=columnas)
+      dfAjuste[avanceRecta]=avRectaAj
+      dfAjuste[avance]=avanceAj
+      dfAjuste[ultimaCoord]=punto[1]
+      dfAjuste['TIPO']='APROX'
+      dfAjuste['TAMAÑO']=13
+      lAjuste.append(dfAjuste)
+    cuadrantes.append(lAjuste)
+  return cuadrantes
+
  
 
 def medicionPerimetro(df,dictlargos,tamañoLandmark):

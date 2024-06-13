@@ -103,45 +103,20 @@ df['TAMAÑO']=tamañoDato
 # intersecc,dictlargos=generacionLinea(df[xyz],'Z','Y',ordIni,ordFin,absIni,absFin)
 # df,dictlargos=medicionPerimetro(df,dictlargos,tamañoLandmark)
 # #fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+
 df=df.round(1)
-PolyAjuste(df,5,arrayEntradaPie,plano='XZ') #'H' para horizontal 'V' para vertical y 'D' para diagonal
-
-dfAprox=df[(df['Y']>arrayEntradaPie[1]-2) &(df['Y']<arrayEntradaPie[1]+2)]
-dfAprox['Y']=arrayEntradaPie[1]
-dfAprox['TIPO']='APROX'
-dfAprox['TAMAÑO']=tamañoDato
-#como el dataframe genera datos similares a los de una elipse divido el dataframe en 2 pedazos
-#el dataFrame que tiene valores de 'X' mayores a arrayEntradaPie[0] 
-#y el dataFrame que tiene valores de 'X' menores a arrayEntradaPie[0]
-df1=dfAprox[(dfAprox['X']>=arrayEntradaPie[0])]
-df2=dfAprox[(dfAprox['X']<arrayEntradaPie[0])]
-#encuentro en df1 el valore de Z maximo para un X maximo
-xMaxdf1=df1['X'].max()
-zMaxdf1=df1[df1['X']==xMaxdf1]['Z'].max()
-# separo al df1 y genero df1Sup y df1Inf segùn si es mayor o menor que zMaxdf1
-df1Sup=df1[df1['Z']>=zMaxdf1]
-df1Inf=df1[df1['Z']<zMaxdf1]
-#encuentro en df2 el valore de Z maximo para un X minimo
-xMindf2=df2['X'].min()
-zMaxdf2=df2[df2['X']==xMindf2]['Z'].max()
-# separo al df2 y genero df2Sup y df2Inf segùn si es mayor o menor que zMaxdf2
-df2Sup=df2[df2['Z']>=zMaxdf2]
-df2Inf=df2[df2['Z']<zMaxdf2]
-
-#ajusto con un polinomio de grado 4 los datos de df1Sup, df1Inf, df2Sup y df2Inf
-x1Sup=df1Sup['X']
-Z1Sup=df1Sup['Z']
-coeficientes1=np.polyfit(x1Sup,Z1Sup,5)
-p1Sup=np.poly1d(coeficientes1)
-#creo un vector X1SupAjustado que vaya desde x1Sup.min() hasta x1Sup.max() con un paso de 0.1
-X1SupAjustado=np.arange(x1Sup.min(),x1Sup.max(),0.1)
-Z1SupAjustado=p1Sup(X1SupAjustado)
+listaAjuste=PolyAjuste(df,arrayEntradaPie,grado=5,paso=2,plano='ZX') 
+for v1 in listaAjuste:
+    for v2 in v1:
+        df=pd.concat([df,v2],ignore_index=True)
+'''
+dfAJ=pd.DataFrame(listaAjuste,scolumns=xyz)
+dfAJ['TIPO']='AJUSTADO'
+dfAJ['TAMAÑO']=tamañoDato
+df=pd.concat([df,dfAJ],ignore_index=True)
 
 
 print(len(df1Sup))
-
-
-'''
 zmaxdfFinal=dfFinal['Z'].max()
 dfFinal1C=dfFinal[(dfFinal['X']>=arrayEntradaPie[0])]
 dfFinal2C=dfFinal[(dfFinal['X']<arrayEntradaPie[0])]
@@ -191,12 +166,14 @@ dfFinal2CsupAjustado['TAMAÑO']=tamañoDato
 #concateno dfFinal1CsupAjustado con dfFinal1Csup
 dfFinal1Csup=pd.concat([dfFinal1Csup,dfFinal1CsupAjustado],ignore_index=True)
 dfFinal2Csup=pd.concat([dfFinal2Csup,dfFinal2CsupAjustado],ignore_index=True)   
-'''
+
 #dfPromedio=dfPromedio.append(dfFinala[(dfFinala['Y']>=i)&(dfFinala['Y']<i+10)].mean(),ignore_index=True)
 #dfFinalb=dfFinal[dfFinal['X']>arrayEntradaPie[0]]
 #df=pd.concat([df,dfPromedio],ignore_index=True)
 dfjuntado=pd.concat([df1Sup,df1Inf],ignore_index=True)
-fig=px.scatter_3d(dfjuntado,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+'''
+fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+'''
 # for key, dfcurva in dictlargos.items():
 #     fig.add_trace(go.Scatter3d(x=dfcurva['X'], y=dfcurva['Y'], z=dfcurva['Z'], mode='lines', name=key,line=dict(color='red', width=4)))
 # for i in range(2):
@@ -204,7 +181,9 @@ fig=px.scatter_3d(dfjuntado,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_m
 #     fig.add_trace(go.Scatter3d(x=dictlargos['PMaxM']['X'], y=dictlargos['PMaxM']['Y'], z=dictlargos['PMaxM']['Z'], mode='lines', name='PMaxM',line=dict(color='red', width=4)))
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
 fig.show()
-#fig.write_html("plot.html")
+#fig.write_html("plot.html")'''
+fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+fig.show()
 
 
 
