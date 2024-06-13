@@ -110,7 +110,10 @@ def PolyAjuste(df,punto,**kwargs):
     print(f"minimo Z: {minAv} para {i} si es 0 es mayor al X")
     DFsup=DF[DF[avance]>=minAv]
     DFinf=DF[DF[avance]<=minAv]
-    cuadSupInf.append([DFsup,DFinf])
+    cuadSupInf.append([DFsup,DFinf]) #guardo 1°cuadrante, 2°cuadrante si i=0 sino 3° y 4°
+    fig=px.scatter_3d(cuadSupInf[0][0],x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+    fig.show()
   DFsup=pd.concat([cuadSupInf[0][0],cuadSupInf[1][0]],ignore_index=True)
   DFinf=pd.concat([cuadSupInf[0][1],cuadSupInf[1][1]],ignore_index=True)
   cuadSupInf=[DFsup,DFinf]
@@ -118,23 +121,6 @@ def PolyAjuste(df,punto,**kwargs):
   for i in range(2):
     avRectaCombo=cuadSupInf[i][avanceRecta]
     avanceCombo=cuadSupInf[i][avance]
-    coef=np.polyfit(avRectaCombo,avanceCombo,grado)
-    pSup=np.poly1d(coef)
-    avRectaAj=np.arange(avRectaCombo.min(),avRectaCombo.max()+0.1,0.1)
-    avanceAj=pSup(avRectaAj)
-    #creo un dataframe con columnas X,Y,Z y coloco todo el vector avRectaAj como X, avanceAj como Z y punto[1] como Y
-    dfAjustePoly=pd.DataFrame(columns=columnas)
-    dfAjustePoly[avanceRecta]=avRectaAj
-    dfAjustePoly[avance]=avanceAj
-    dfAjustePoly[ultimaCoord]=punto[1]
-    dfAjustePoly['TIPO']='APROX'
-    dfAjustePoly['TAMAÑO']=13
-    print(dfAjustePoly.head(20))
-    print(dfAjustePoly.tail(20))
-    dfAjustePoly=pd.concat([dfAjustePoly,dfAjuste],ignore_index=True)
-    fig=px.scatter_3d(dfAjustePoly,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-    fig.show()
     cuadrantes.append(dfAjuste)
   return cuadrantes
 
