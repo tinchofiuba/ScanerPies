@@ -66,6 +66,55 @@ def Minimos(listaMin):
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 #--------------------------------------------------------------
+def medidaPerimetral(df,punto,**kwargs):
+  coord='XYZ'
+  columnas=['X','Y','Z']
+  #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
+  if 'paso' in kwargs:
+    paso=kwargs['paso']
+  else:
+    paso=0
+  if 'plano' in kwargs:
+    avance=kwargs['plano'][0]
+    avanceRecta=kwargs['plano'][1]
+    for i in range(2):
+      coord=coord.replace(kwargs['plano'][i],'')
+    ultimaCoord=coord
+  if 'grado' in kwargs:
+    grado=kwargs['grado']
+  else:
+    grado=4
+  #falta ver el tema de la coordenada!
+  cuadSupInf=[]
+  dfLonja=df[(df[ultimaCoord]>punto[ultimaCoord]-paso) &(df[ultimaCoord]<punto[ultimaCoord]+paso)]
+  dfLonja[ultimaCoord]=punto[1]
+  dfAjuste=dfLonja.copy() 
+  dfAjuste['TIPO']='DATO'
+  dfAjuste['TAMAÑO']=12
+  df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[avanceRecta])]
+  df2=dfAjuste[(dfAjuste[avanceRecta]<punto[avanceRecta])]
+  dfs=[df1,df2]
+  perim=0
+  for i in range(2):
+    DF=dfs[i]
+    if i==0:
+      maxMin_AvRecta=DF[avanceRecta].max()
+    else:
+      maxMin_AvRecta=DF[avanceRecta].min()
+    minAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].min()
+    DFsup=DF[DF[avance]>=minAv].sort_values(by=[avanceRecta,avance])
+    DFinf=DF[DF[avance]<=minAv].sort_values(by=[avanceRecta,avance])
+    cuadSupInf.append([DFsup,DFinf]) #guardo 1°cuadrante, 2°cuadrante si i=0 sino 3° y 4°
+    for j in range(2):
+      dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
+      perim=perim+dist.sum()
+  #concateno los 4 df que estan en cuadSupInf
+  #dfPlot=pd.concat([cuadSupInf[0][0],cuadSupInf[0][1],cuadSupInf[1][0],cuadSupInf[1][1]],ignore_index=True)
+  #fig=px.scatter_3d(dfPlot,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+  #fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+  #fig.show()
+  return dfLonja
+
 def PolyAjuste(df,punto,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
