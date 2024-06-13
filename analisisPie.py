@@ -89,7 +89,7 @@ df=pd.concat([df,dfAlturaTalon],ignore_index=True)
 
 df=df.round(1)
 dfCircEntrPie=medidaPerimetral(df,arrayEntradaPie,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
-dfcircMetaTarso=medidaPerimetral(df,[dfInMetaTarso,dfFinMetaTarso],diagonal=True,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
+dfcircMetaTarso=medidaPerimetral(df,[dfInMetaTarso,dfFinMetaTarso],diagonal=True,paso=0.3,plano='ZX') #medicion en el plano Zx del perimetro
 
 
 

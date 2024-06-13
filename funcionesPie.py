@@ -110,12 +110,27 @@ def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
   m=m.iloc[0] 
   b=puntoIni[ultimaCoord]-m*puntoIni[avanceRecta]
   b=b.iloc[0]
-  #obtengo los puntos de la recta desde el Yinicial hasta el Yfinal con un paso en Y de 0.1
-  #y con esto obtengo los puntos de la recta
-  ordenadas=np.linspace(puntoIni[ultimaCoord],puntoFin[ultimaCoord],int(abs(puntoFin[ultimaCoord]-puntoIni[ultimaCoord])*10))
+  pIni=puntoIni[avanceRecta].iloc[0]
+  pFin=puntoFin[avanceRecta].iloc[0]
+  ordenadas=np.linspace(pIni,pFin,int(abs(pIni-pFin)*10))
   ordenadas=np.round(ordenadas,1)
-  print(puntoIni[ultimaCoord],puntoFin[ultimaCoord])
-  print(ordenadas)
+  imgRecta=np.round((m*ordenadas+b),1)
+  maxCorte=[]
+  minCorte=[]
+  for i in range(len(imgRecta)):
+    dfCorte=df[df[avanceRecta]==ordenadas[i]]
+    dfCorte=dfCorte[(df[ultimaCoord]<=imgRecta[i]+paso) & (df[ultimaCoord]>=imgRecta[i]-paso)]
+    dfCorte[ultimaCoord]=imgRecta[i]
+    if len(dfCorte)>0:
+      maxCorte.append(dfCorte)
+  dfCorte=pd.concat(maxCorte,ignore_index=True)
+  dfCorte['TIPO']='Metatarso'
+  dfCorte['TAMAÑO']=13
+  df=pd.concat([df,dfCorte],ignore_index=True)
+  fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+  fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+  fig.show()
+  #avanzo en la recta y para cada punto en el sentido de avanceRecta, y el 
 def medidaPerimetral(df,puntos,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
