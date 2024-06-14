@@ -16,11 +16,11 @@ def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     largo=int(len(lZmin)/3) 
     max_lZmin=np.max(lZmin[:largo])
     for v in lZmin:
-        if v>max_lZmin:
+        if v>max_lZmin+1:
             indice=lZmin.index(v)
-            if lZmin[indice+2]>max_lZmin:
+            if lZmin[indice+1]>max_lZmin:
                 break
-    return lYmin[indice],lZmin[indice]
+    return lYmin[::-1][indice],np.round(lZmin[indice])
 
 def norma(v1, v2):
     return np.linalg.norm(np.array(v1) - np.array(v2))
@@ -66,8 +66,7 @@ def Minimos(listaMin):
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 #--------------------------------------------------------------
-def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
-  #si puntos es una lista, me quedo con el primer punto
+def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   if type(puntos)==list:
     punto=puntos[0]
   else:
@@ -75,10 +74,11 @@ def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
   #falta ver el tema de la coordenada!
   cuadSupInf=[]
   dfLonja=df[(df[ultimaCoord]>punto[ultimaCoord]-paso) &(df[ultimaCoord]<punto[ultimaCoord]+paso)]
+  dfLonja['TIPO']=tag
+  dfLonja['TAMAÑO']=12
   dfLonja[ultimaCoord]=punto[1]
   dfAjuste=dfLonja.copy() 
-  dfAjuste['TIPO']='DATO'
-  dfAjuste['TAMAÑO']=12
+
   df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[avanceRecta])]
   df2=dfAjuste[(dfAjuste[avanceRecta]<punto[avanceRecta])]
   dfs=[df1,df2]
@@ -96,14 +96,33 @@ def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
     for j in range(2):
       dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
       perim=perim+dist.sum()
-  #concateno los 4 df que estan en cuadSupInf
-  #dfPlot=pd.concat([cuadSupInf[0][0],cuadSupInf[0][1],cuadSupInf[1][0],cuadSupInf[1][1]],ignore_index=True)
-  #fig=px.scatter_3d(dfPlot,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-  #fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-  #fig.show()
   return dfLonja
 
-def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
+def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
+  puntoIni=puntos[0][columnas]
+  puntoFin=puntos[1][columnas]
+  m=(puntoFin[ultimaCoord].iloc[0]-puntoIni[ultimaCoord].iloc[0])/(puntoFin[avance].iloc[0]-puntoIni[avance].iloc[0])
+  b=puntoIni[ultimaCoord].iloc[0]-m*puntoIni[avance].iloc[0]
+  pIni=puntoIni[avance].iloc[0]
+  pFin=puntoFin[avance].iloc[0]
+  ordenadas=np.linspace(pIni,pFin,int(abs(pIni-pFin)*10))
+  ordenadas=np.round(ordenadas,1)
+  imgRecta=np.round((m*ordenadas+b),1)
+  maxCorte=[]
+  minCorte=[]
+  for i in range(len(imgRecta)):
+    dfCorte=df[(df[avance]<=ordenadas[i]+paso) & (df[avance]>=ordenadas[i]-paso)]
+    dfCorte=dfCorte[(dfCorte[ultimaCoord]<=imgRecta[i]+paso) & (dfCorte[ultimaCoord]>=imgRecta[i]-paso)]
+    dfCorte[ultimaCoord]=imgRecta[i]
+    dfCorte[avance]=ordenadas[i]
+    if len(dfCorte)>0:
+      maxCorte.append(dfCorte)
+  dfCorte=pd.concat(maxCorte,ignore_index=True)
+  dfCorte['TIPO']=tag
+  dfCorte['TAMAÑO']=13
+  return dfCorte
+
+def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   puntoIni=puntos[0]
   puntoFin=puntos[1]
   m=(puntoFin[ultimaCoord]-puntoIni[ultimaCoord])/(puntoFin[avanceRecta]-puntoIni[avanceRecta])
@@ -119,19 +138,16 @@ def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas):
   minCorte=[]
   for i in range(len(imgRecta)):
     dfCorte=df[df[avanceRecta]==ordenadas[i]]
-    dfCorte=dfCorte[(df[ultimaCoord]<=imgRecta[i]+paso) & (df[ultimaCoord]>=imgRecta[i]-paso)]
+    dfCorte=dfCorte[(dfCorte[ultimaCoord]<=imgRecta[i]+paso) & (dfCorte[ultimaCoord]>=imgRecta[i]-paso)]
     dfCorte[ultimaCoord]=imgRecta[i]
     if len(dfCorte)>0:
       maxCorte.append(dfCorte)
   dfCorte=pd.concat(maxCorte,ignore_index=True)
-  dfCorte['TIPO']='Metatarso'
+  dfCorte['TIPO']=tag
   dfCorte['TAMAÑO']=13
-  df=pd.concat([df,dfCorte],ignore_index=True)
-  fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-  fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-  fig.show()
-  #avanzo en la recta y para cada punto en el sentido de avanceRecta, y el 
-def medidaPerimetral(df,puntos,**kwargs):
+  return dfCorte
+
+def medidaPerimetral(df,puntos,tag,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
   #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
@@ -146,12 +162,18 @@ def medidaPerimetral(df,puntos,**kwargs):
       coord=coord.replace(kwargs['plano'][i],'')
     ultimaCoord=coord
     if 'diagonal' in kwargs:
-      return funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas) 
-      pass
+      return funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
     else: #si no es diagonal es en un plano horizontal o vertical
-      return funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas)
+      return funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
+  elif 'inclinado' in kwargs:
+    avance=kwargs['inclinado'][0]
+    avanceRecta=kwargs['inclinado'][1]
+    for i in range(2):
+      coord=coord.replace(kwargs['inclinado'][i],'')
+    ultimaCoord=coord
+    return funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
     
-  
+  '''
 def PolyAjuste(df,punto,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
@@ -236,6 +258,7 @@ def medicionPerimetro(df,dictlargos,tamañoLandmark):
   df=pd.concat([df,dictlargos['PMaxM']],ignore_index=True)
   return df,dictlargos 
 
+
 def curvasPerimetrales(df,ejeMax,ejeCorte): #ejemax, eje donde se busca un máximo, ejecorte,
   #eje en el cual se buscan valores mayores o menores al corte
   maxZ=np.round(df[ejeMax].max(),1)
@@ -305,7 +328,7 @@ def generacionLinea(df,avance,avanceRecta,ordIni,ordFin,abscisaIni,abscisaFin):
           dictCurva[columnas[1]].append(PasoRecta)
           dictCurva[columnas[2]].append(np.round(coord.min(),1))
       
-      return pd.DataFrame(dictCurva)
+      return pd.DataFrame(dictCurva)'''
 
     
 
