@@ -327,7 +327,7 @@ def generacionLinea(df,avance,avanceRecta,ordIni,ordFin,abscisaIni,abscisaFin):
           dictCurva[columnas[0]].append(paso)
           dictCurva[columnas[1]].append(PasoRecta)
           dictCurva[columnas[2]].append(np.round(coord.min(),1))
-      
+      hola
       return pd.DataFrame(dictCurva)'''
 
     
