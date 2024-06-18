@@ -66,6 +66,58 @@ def Minimos(listaMin):
 #--------------------------------------------------------------
 #--------------------------------------------------------------
 #--------------------------------------------------------------
+
+def MedicionPerimetro(df,coord):
+  max1coord=df[coord[0]].max() #maximo de la coordenada 1
+  max2_1coord=df[df[coord[0]]==max1coord][coord[1]].max() #busco que valores de coord[1] existen para el max1coord
+  df1=df[df[coord[1]]>=max2_1coord]
+  df2=df[df[coord[1]]<=max2_1coord]
+  df1_2=[df1,df2]
+  i=0
+  listaCuadrantes=[]
+  listaPerimetros=[]
+  for dfi in df1_2:
+    if i==0:
+      limCoord1=dfi[coord[1]].max() #si estamos del lado de mayor coord[1]
+    else:
+      limCoord1=dfi[coord[1]].min() #si estamos del lado de menor coord[1]
+    limcoord0=dfi[dfi[coord[1]]==limCoord1][coord[0]].max()
+    dfi_M=dfi[dfi[coord[0]]>=limcoord0].sort_values(by=coord[1])
+    sentido=np.sign(dfi_M[coord[0]].iloc[-1]-dfi_M[coord[0]].iloc[0])
+    #viendo el sentido en cual va la curva en coord[0] si veo que al avanzar en coord[1] en un momento 
+    #se retrocede en coord[0] elimino ese punto ya que al avanzar y retroceder el perimetro medirá más
+    dfi_MFiltrado=dfi_M[dfi_M[coord[0]].diff().fillna(0)*sentido>=0]
+    dfi_m=dfi[dfi[coord[0]]<=limcoord0].sort_values(by=coord[1])
+    sentido=np.sign(dfi_m[coord[0]].iloc[-1]-dfi_m[coord[0]].iloc[0])
+    #viendo el sentido en cual va la curva en coord[0] si veo que al avanzar en coord[1] en un momento 
+    #se retrocede en coord[0] elimino ese punto ya que al avanzar y retroceder el perimetro medirá más
+    dfi_mFiltrado=dfi_m[dfi_m[coord[0]].diff().fillna(0)*sentido>=0]
+    listaCuadrantes.append([dfi_MFiltrado,dfi_mFiltrado])
+    for j in range(2):
+      dfij=listaCuadrantes[i][j]
+      dfij['TIPO']=f'Cuadrante {i+1} {j+1}'
+      dist=np.linalg.norm(listaCuadrantes[i][j][coord].diff().dropna(), axis=1)
+      perimInd=dist.sum()
+      #print(f'Perimetro cuadrante {i+1} {j+1}: {np.round(perimInd,1)}mm')
+      listaPerimetros.append(perimInd)
+    i+=1
+      #sumo los perimetros de la lsitaPerimetros
+  perimetro=sum(listaPerimetros)
+  print(f'Perimetro total: {np.round(perimetro,1)}mm')
+  #concateno los 4 df que estan en listaCuadrantes
+  dfij=pd.concat([listaCuadrantes[0][0],listaCuadrantes[0][1],listaCuadrantes[1][0],listaCuadrantes[1][1]],ignore_index=True)
+  fig=px.line_3d(dfij,x='X',y='Y',z='Z',color='TIPO')
+  fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+  fig.show()
+    
+  '''
+  df13=pd.concat(df1_4,ignore_index=True)
+  df13['TIPO']=df13['TIPO']+f' perimetro: {np.round(perim,1)}mm'
+  fig=px.scatter_3d(df13,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+  fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+  fig.show()'''
+
+
 def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   if type(puntos)==list:
     punto=puntos[0]
@@ -96,6 +148,7 @@ def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
     for j in range(2):
       dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
       perim=perim+dist.sum()
+  MedicionPerimetro(dfLonja,[avance,avanceRecta])
   return dfLonja
 
 def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
@@ -120,6 +173,7 @@ def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,ta
   dfCorte=pd.concat(maxCorte,ignore_index=True)
   dfCorte['TIPO']=tag
   dfCorte['TAMAÑO']=13
+  MedicionPerimetro(dfCorte,[avance,avanceRecta])
   return dfCorte
 
 def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
@@ -162,17 +216,17 @@ def medidaPerimetral(df,puntos,tag,**kwargs):
       coord=coord.replace(kwargs['plano'][i],'')
     ultimaCoord=coord
     if 'diagonal' in kwargs:
-      return funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
+      dfObtenido=funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
     else: #si no es diagonal es en un plano horizontal o vertical
-      return funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
+      dfObtenido=funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
   elif 'inclinado' in kwargs:
     avance=kwargs['inclinado'][0]
     avanceRecta=kwargs['inclinado'][1]
     for i in range(2):
       coord=coord.replace(kwargs['inclinado'][i],'')
     ultimaCoord=coord
-    return funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
-    
+    dfObtenido=funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
+  
   '''
 def PolyAjuste(df,punto,**kwargs):
   coord='XYZ'
