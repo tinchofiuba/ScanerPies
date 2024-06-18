@@ -123,32 +123,23 @@ dfLandmarks['TAMAÑO']=tamañoLandmark
 dfLandmarks2=pd.DataFrame([dfLandmarks.iloc[7]],columns=xyz)
 dfLandmarks2['TIPO']='LANDMARK'
 dfLandmarks2['TAMAÑO']=tamañoLandmark
-dfCircEntrada=medidaPerimetral(df,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.3,plano='ZX') #medicion en el plano Zx del perimetro
-dfCircEmpeine=medidaPerimetral(df,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.3,plano='ZX') #medicion en el plano Zx del perimetro
+dfCircEntrada=medidaPerimetral(df,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
+dfCircEmpeine=medidaPerimetral(df,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
 dfcircMetaTarso=medidaPerimetral(df,[dfInMetaTarso,dfFinMetaTarso],'PERIMETRO METATARSO',diagonal=True,paso=0.2,plano='ZX') #medicion en el plano Zx del perimetro
 dfCircTalonEntrada=medidaPerimetral(df,[dfAlturaTalon,dfEntradaPie],'PERIMETRO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircInTalonEntrada=medidaPerimetral(df,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircTalonEmpeine=medidaPerimetral(df,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircInTalonEmpeine=medidaPerimetral(df,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 
-'''
-df=pd.concat([df,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
-fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-fig.add_trace(go.Scatter3d(x=dfDedos['X'], y=dfDedos['Y'], z=dfDedos['Z'], mode='lines', name='Tipo de pie',line=dict(color='red', width=4)))
-fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-fig.show()
-fig=px.scatter_3d(df,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-# for key, dfcurva in dictlargos.items():
-#     fig.add_trace(go.Scatter3d(x=dfcurva['X'], y=dfcurva['Y'], z=dfcurva['Z'], mode='lines', name=key,line=dict(color='red', width=4)))
-# for i in range(2):
-#     fig.add_trace(go.Scatter3d(x=dictlargos['PMaxm']['X'], y=dictlargos['PMaxm']['Y'], z=dictlargos['PMaxm']['Z'], mode='lines', name='PMaxm',line=dict(color='red', width=4)))
-#     fig.add_trace(go.Scatter3d(x=dictlargos['PMaxM']['X'], y=dictlargos['PMaxM']['Y'], z=dictlargos['PMaxM']['Z'], mode='lines', name='PMaxM',line=dict(color='red', width=4)))
-fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-fig.show()
-#fig.write_html("plot.html")
 
+'''
+dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-fig.show()'''
+fig.show()
+'''
+
+
 
 
 

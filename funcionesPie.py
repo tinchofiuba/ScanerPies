@@ -121,28 +121,8 @@ def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   dflonjaCopia['TIPO']=tag
   dflonjaCopia['TAMAÑO']=12
   dflonjaCopia[ultimaCoord]=punto[1]
-  medicionFiltrada=MedicionPerimetro(dflonjaCopia,[avance,avanceRecta])
-  return medicionFiltrada
-
-'''
-  df1=dfAjuste[(dfAjuste[avanceRecta]>=punto[avanceRecta])]
-  df2=dfAjuste[(dfAjuste[avanceRecta]<punto[avanceRecta])]
-  dfs=[df1,df2]
-  perim=0
-  for i in range(2):
-    DF=dfs[i]
-    if i==0:
-      maxMin_AvRecta=DF[avanceRecta].max()
-    else:
-      maxMin_AvRecta=DF[avanceRecta].min()
-    minAv=DF[DF[avanceRecta]==maxMin_AvRecta][avance].min()
-    DFsup=DF[DF[avance]>=minAv].sort_values(by=[avanceRecta,avance])
-    DFinf=DF[DF[avance]<=minAv].sort_values(by=[avanceRecta,avance])
-    cuadSupInf.append([DFsup,DFinf]) #guardo 1°cuadrante, 2°cuadrante si i=0 sino 3° y 4°
-    for j in range(2):
-      dist=np.linalg.norm(cuadSupInf[i][j][columnas].diff().dropna(), axis=1)
-      perim=perim+dist.sum()'''
-
+  MedicionPerimetro(dflonjaCopia,[avance,avanceRecta])
+  return dflonjaCopia
 
 def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   puntoIni=puntos[0][columnas]
@@ -192,9 +172,11 @@ def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   dfCorte=pd.concat(maxCorte,ignore_index=True)
   dfCorte['TIPO']=tag
   dfCorte['TAMAÑO']=13
+  MedicionPerimetro(dfCorte,[avance,avanceRecta])
   return dfCorte
 
 def medidaPerimetral(df,puntos,tag,**kwargs):
+  print(tag)
   coord='XYZ'
   columnas=['X','Y','Z']
   #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
@@ -209,6 +191,7 @@ def medidaPerimetral(df,puntos,tag,**kwargs):
       coord=coord.replace(kwargs['plano'][i],'')
     ultimaCoord=coord
     if 'diagonal' in kwargs:
+      print('diagonal!!!!')
       dfObtenido=funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
     else: #si no es diagonal es en un plano horizontal o vertical
       dfObtenido=funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
@@ -219,3 +202,4 @@ def medidaPerimetral(df,puntos,tag,**kwargs):
       coord=coord.replace(kwargs['inclinado'][i],'')
     ultimaCoord=coord
     dfObtenido=funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
+  return dfObtenido
