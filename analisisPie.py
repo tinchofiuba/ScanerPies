@@ -81,10 +81,11 @@ listaLandmarksDedos=[7,8,20,21,9]
 for dedo in listaLandmarksDedos:
     listaDedos.append(dfLandmarks.iloc[dedo]['Y'].round(1))
 dfDedos=dfLandmarks.iloc[listaLandmarksDedos]
-dfDedos['Z']=0
-dfDedos['TIPO']='DEDOS'
-dfDedos['TAMAÑO']=tamañoLandmark
-dfDedos['Y'].round(1)
+dfDedoscopia=dfDedos.copy()
+dfDedoscopia['Z']=0
+dfDedoscopia['TIPO']='DEDOS'
+dfDedoscopia['TAMAÑO']=tamañoLandmark
+dfDedoscopia['Y'].round(1)
 if listaDedos[0]>listaDedos[1]:
     tipoDedo='Egipcio'
 elif listaDedos[0]<listaDedos[1] and listaDedos[1]>listaDedos[2]:
@@ -125,10 +126,10 @@ dfLandmarks2['TAMAÑO']=tamañoLandmark
 dfCircEntrada=medidaPerimetral(df,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.3,plano='ZX') #medicion en el plano Zx del perimetro
 dfCircEmpeine=medidaPerimetral(df,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.3,plano='ZX') #medicion en el plano Zx del perimetro
 dfcircMetaTarso=medidaPerimetral(df,[dfInMetaTarso,dfFinMetaTarso],'PERIMETRO METATARSO',diagonal=True,paso=0.2,plano='ZX') #medicion en el plano Zx del perimetro
-dfCircTalonEntrada=medidaPerimetral(df,[dfAlturaTalon,dfEntradaPie],'PERIMETRO TALON - ENTRADA PIE',diagonal=True,paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
-dfCircInTalonEntrada=medidaPerimetral(df,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',diagonal=True,paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
-dfCircTalonEmpeine=medidaPerimetral(df,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',diagonal=True,paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
-dfCircInTalonEmpeine=medidaPerimetral(df,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',diagonal=True,paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+dfCircTalonEntrada=medidaPerimetral(df,[dfAlturaTalon,dfEntradaPie],'PERIMETRO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+dfCircInTalonEntrada=medidaPerimetral(df,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+dfCircTalonEmpeine=medidaPerimetral(df,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
+dfCircInTalonEmpeine=medidaPerimetral(df,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 
 '''
 df=pd.concat([df,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
