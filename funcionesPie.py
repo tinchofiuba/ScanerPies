@@ -5,6 +5,18 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 
+def Metatarso(df,minx,maxx):
+  maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
+  maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
+  iniMetaTarso=[minx,maxyMetatarzoIn,maxzMetatarzoIn]#<--------------------vector inicio del metatarzo, izquierda
+  iniMetatarsoLargo=[minx,maxyMetatarzoIn,0]
+  maxyMetatarsoFin=df[df['X']==maxx]['Y'].max()
+  maxzMetatarsoFin=df[(df['X']==maxx) & (df['Y']==maxyMetatarsoFin)]['Z'].max()
+  finMetaTarso=[maxx,maxyMetatarsoFin,maxzMetatarsoFin]#<--------------------vector fin del metatarzo, derecha
+  finMetatarsoLargo=[maxx,maxyMetatarsoFin,0]
+  anchoMetatarsiano=norma(iniMetatarsoLargo,finMetatarsoLargo)#<--------------------ancho metatarsiano
+  return iniMetaTarso,finMetaTarso,anchoMetatarsiano
+
 def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     df_y=df[df['Y']<limiteY/2]
     for y in np.round(df_y['Y'].unique(),1):
@@ -99,15 +111,11 @@ def MedicionPerimetro(df,coord):
       dfijCopia['TIPO']=f'Cuadrante {i+1} {j+1}'
       dist=np.linalg.norm(listaCuadrantes[i][j][coord].diff().dropna(), axis=1)
       perimInd=dist.sum()
-      #print(f'Perimetro cuadrante {i+1} {j+1}: {np.round(perimInd,1)}mm')
       listaPerimetros.append(perimInd)
     i+=1
-      #sumo los perimetros de la lsitaPerimetros
-  perimetro=sum(listaPerimetros)
-  print(f'Perimetro total: {np.round(perimetro,1)}mm')
-  #concateno los 4 df que estan en listaCuadrantes
+  medicion=np.round(sum(listaPerimetros),1)
   dfijCopia=pd.concat([listaCuadrantes[0][0],listaCuadrantes[0][1],listaCuadrantes[1][0],listaCuadrantes[1][1]],ignore_index=True)
-  return dfijCopia
+  return dfijCopia,medicion
 
 def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   if type(puntos)==list:
@@ -121,8 +129,8 @@ def funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   dflonjaCopia['TIPO']=tag
   dflonjaCopia['TAMAÑO']=12
   dflonjaCopia[ultimaCoord]=punto[1]
-  MedicionPerimetro(dflonjaCopia,[avance,avanceRecta])
-  return dflonjaCopia
+  dfCortado,medicion=MedicionPerimetro(dflonjaCopia,[avance,avanceRecta])
+  return dflonjaCopia,medicion
 
 def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   puntoIni=puntos[0][columnas]
@@ -146,8 +154,8 @@ def funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,ta
   dfCorte=pd.concat(maxCorte,ignore_index=True)
   dfCorte['TIPO']=tag
   dfCorte['TAMAÑO']=13
-  MedicionPerimetro(dfCorte,[avance,avanceRecta])
-  return dfCorte
+  dfCortado,medicion=MedicionPerimetro(dfCorte,[avance,avanceRecta])
+  return dfCorte,medicion
 
 def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   puntoIni=puntos[0]
@@ -172,14 +180,12 @@ def funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag):
   dfCorte=pd.concat(maxCorte,ignore_index=True)
   dfCorte['TIPO']=tag
   dfCorte['TAMAÑO']=13
-  MedicionPerimetro(dfCorte,[avance,avanceRecta])
-  return dfCorte
+  dfCortado,medicion=MedicionPerimetro(dfCorte,[avance,avanceRecta])
+  return dfCorte,medicion
 
-def medidaPerimetral(df,puntos,tag,**kwargs):
-  print(tag)
+def medidaPerimetral(df,listaMedidas,puntos,tag,**kwargs):
   coord='XYZ'
   columnas=['X','Y','Z']
-  #me fijo si esta la key "paso" en kwargs, si no la hay seteo paso=0
   if 'paso' in kwargs:
     paso=kwargs['paso']
   else:
@@ -191,15 +197,15 @@ def medidaPerimetral(df,puntos,tag,**kwargs):
       coord=coord.replace(kwargs['plano'][i],'')
     ultimaCoord=coord
     if 'diagonal' in kwargs:
-      print('diagonal!!!!')
-      dfObtenido=funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
+      dfObtenido,medicion=funcDiagonal(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
     else: #si no es diagonal es en un plano horizontal o vertical
-      dfObtenido=funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
+      dfObtenido,medicion=funcPlano(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag)
   elif 'inclinado' in kwargs:
     avance=kwargs['inclinado'][0]
     avanceRecta=kwargs['inclinado'][1]
     for i in range(2):
       coord=coord.replace(kwargs['inclinado'][i],'')
     ultimaCoord=coord
-    dfObtenido=funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
-  return dfObtenido
+    dfObtenido,medicion=funcPlanoInclinado(df,puntos,paso,avance,avanceRecta,ultimaCoord,columnas,tag) 
+  listaMedidas.append(medicion)
+  return dfObtenido,listaMedidas
