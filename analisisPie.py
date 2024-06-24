@@ -150,10 +150,11 @@ for i in range(len(MedidasPerim)):
     dfMedicion.at[0,PerimetrosAMedir[i]]=MedidasPerim[i]
 dfMedicion.to_csv('Mediciones.csv',index=False)
 
+'''
 dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
 fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-fig.show()
+fig.show()'''
 
 
 
