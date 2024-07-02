@@ -25,6 +25,7 @@ def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark):
       tipoPie='Cuadrado'
   if 9 in listaLandmarksDedos:
     y=dfLandmarks.iloc[9]['Y'] #Y que ubica el soft para el dedo chiquito
+    print(f"el y para la punta del pie es: {y-20}")
     alturaPuntaPie=df[df['Y']>(y-20)]['Z'].max() #le resto 2cm hacia el talón
   else:
     maxy=df['Y'].max()
@@ -34,7 +35,10 @@ def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark):
       izqOder='IZQUIERDO'
     else:
       izqOder='DERECHO'
-  alturaMitadPie=df[df['Y']==(df['Y'].max()/2)]['Z'].max()
+  ymedia=df['Y'].max()/2
+  dfYmedia=df[(df['Y']>ymedia-1) & (df['Y']<ymedia+1)]['Z']
+  alturaMitadPie=dfYmedia.max()
+
   return dfDedoscopia,tipoPie,alturaPuntaPie,izqOder,alturaMitadPie
 
 def chequeoData(df):
@@ -56,7 +60,7 @@ def izqOder(df,dflandmarks):
     lado='DERECHO'
   return lado
 
-def Metatarso(df,maxx,maxy):
+def Metatarso(df,maxx,maxy,izqOder):
   minx=df[df['Y']>maxy/2]['X'].min()
   maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
   maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
@@ -67,7 +71,13 @@ def Metatarso(df,maxx,maxy):
   finMetaTarso=[maxx,maxyMetatarsoFin,maxzMetatarsoFin]#<--------------------vector fin del metatarzo, derecha
   finMetatarsoLargo=[maxx,maxyMetatarsoFin,0]
   anchoMetatarsiano=norma(iniMetatarsoLargo,finMetatarsoLargo)#<--------------------ancho metatarsiano
-  return iniMetaTarso,finMetaTarso,anchoMetatarsiano
+  if izqOder=='IZQUIERDO':
+    z=df[(df['Y']>iniMetaTarso[1]-1) & (df['Y']<iniMetaTarso[1]+1)]['Z'].max()
+    alturaMetatarso=z.max()
+  elif izqOder=='DERECHO':
+    z=df[(df['Y']>finMetaTarso[1]-1) & (df['Y']<finMetaTarso[1]+1)]['Z'].max()
+    alturaMetatarso=z.max()
+  return iniMetaTarso,finMetaTarso,anchoMetatarsiano,alturaMetatarso
 
 def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     df_y=df[df['Y']<limiteY/2]

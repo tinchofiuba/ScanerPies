@@ -4,6 +4,16 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie
+import time
+import ipinfo
+
+'''access_token = 'tu_token_de_acceso'
+handler = ipinfo.getHandler(access_token)
+details = handler.getDetails()
+print(details.city)
+print(details.loc)  # Latitud y longitud'''
+
+
 
 #defino variables a utilizar
 lZmin=[]
@@ -16,10 +26,12 @@ xyz=["X","Y","Z"]
 datosPersonales=['TAG','USUARIO','FECHA','LUGAR','OBSERVACIONES']
 PerimetrosAMedir=['PERIM ENTRADA','PERIM EMPEINE','PERIM METATARSO','PERIM TALON-ENTRADA','PERIM INICIO TALON-ENTRADA','PERIM TALON-EMPEINE','PERIM INICIO TALON-EMPEINE']
 MedidasAbsolutas=['LARGO','ANCHO TOTAL','ALTURA ENTRADA','ALTURA EMPEINE','ALTURA TALON','ALTURA ARCO']
-MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
+MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MAX METATARSO','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
 listaCsv=datosPersonales+PerimetrosAMedir+MedidasAbsolutas+MedidasCalculadas
 
 dfMedicion=pd.DataFrame(columns=listaCsv)
+#guardo la fecha y hora de la medicion
+dfMedicion.at[0,'FECHA']=time.strftime("%d/%m/%Y %H:%M:%S")
 tamañoDato=8
 tamañoLandmark=8
 indice=0
@@ -46,8 +58,18 @@ maxy=df['Y'].max()
 minz=df['Z'].min()
 maxz=df['Z'].max()
 #------------------------------------------------------------------------------
-iniMetaTarso,finMetaTarso,anchoMetatarsiano=Metatarso(df,maxx,maxy)
+dfMedicion.at[0,'TAG']="tag"
+#---------------------MEDICIONES----------------------------------------------
+listaLandmarksDedos=[7,8,20,21,9]
+dfDedoscopia,tipoDePie,alturaPuntaPie,izqOder,alturaMitadPie=tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark)
+dfMedicion.at[0,'TIPO DE PIE']=tipoDePie
+dfMedicion.at[0,'ALTURA PUNTA DE PIE']=alturaPuntaPie
+dfMedicion.at[0,'PIE IZQ/DER']=izqOder
+dfMedicion.at[0,'ALTURA MITAD DEL PIE']=alturaMitadPie
+#------------------------------------------------------------------------------
+iniMetaTarso,finMetaTarso,anchoMetatarsiano,alturaMetatarso=Metatarso(df,maxx,maxy,izqOder)
 dfMedicion.at[0,'ANCHO METATARSICO']=np.round(anchoMetatarsiano,1)
+dfMedicion.at[0,'ALTURA MAX METATARSO']=np.round(alturaMetatarso,1)
 dfInMetaTarso=pd.DataFrame([iniMetaTarso],columns=xyz)
 dfFinMetaTarso=pd.DataFrame([finMetaTarso],columns=xyz)
 #------------------------------------------------------------------------------
@@ -57,7 +79,7 @@ xAlturaMaxTalon=df[(df['Z']==AlturaMaxTalon) & (df['Y']==miny)]['X'].mean()
 arrayAlturaTalon=[xAlturaMaxTalon,0,AlturaMaxTalon]#<--------------------array alturaTalon
 dfAlturaTalon=pd.DataFrame([arrayAlturaTalon],columns=xyz)
 #------------------------------------------------------------------------------
-LargoPie=maxy-miny
+LargoPie=np.round(maxy-miny,1)
 dfMedicion.at[0,'LARGO']=LargoPie
 AnchoPie=maxx-minx
 dfMedicion.at[0,'ANCHO TOTAL']=AnchoPie
@@ -92,11 +114,6 @@ distanciaEmpeineInicioTalon=norma(arrayAlturaEmpeine,arrayInicioTalon)#<--------
 dfMedicion.at[0,'LARGO INICIO TALON-EMPEINE']=np.round(distanciaEmpeineInicioTalon,1)
 distanciaEntrada_IniciTalon=norma(arrayEntradaPie,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
 dfMedicion.at[0,'LARGO INICIO TALON-ENTRADA']=np.round(distanciaEntrada_IniciTalon,1)
-listaLandmarksDedos=[7,8,20,21,9]
-dfDedoscopia,tipoDePie,alturaPuntaPie,izqOder,alturaMitadPie=tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark)
-dfMedicion.at[0,'TIPO DE PIE']=tipoDePie
-dfMedicion.at[0,'ALTURA PUNTA DE PIE']=tipoDePie
-dfMedicion.at[0,'PIE IZQ/DER']=izqOder
 
 df['TIPO']='DATO'
 df['TAMAÑO']=tamañoDato
@@ -140,6 +157,9 @@ for i in range(len(MedidasPerim)):
 #si ya existe el archivo lo abro y le agrego la nueva medicion, si no existe locreo y vuelco la info que hay en dfMedicion
 try:
     dfViejo=pd.read_csv('Mediciones.csv')
+    #me fijo si el TAG ya existe en el archivo, si es así le agrego al tag el string ".duplicado"
+    if dfViejo['TAG'].str.contains(dfMedicion.at[0,'TAG']).any():
+        dfMedicion.at[0,'TAG']=dfMedicion.at[0,'TAG']+".duplicado"
     dfMedicion=pd.concat([dfViejo,dfMedicion],ignore_index=True)
     dfMedicion.to_csv('Mediciones.csv',index=False)
 except:
