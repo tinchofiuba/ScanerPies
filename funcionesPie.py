@@ -5,7 +5,59 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 
-def Metatarso(df,minx,maxx):
+#función para determinar:
+#1-altura de la punta del pie
+#2-tipo de pie
+#3-pie izquierdo o derecho
+def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark): 
+  listaDedos=[dfLandmarks.iloc[dedo]['Y'].round(1) for dedo in listaLandmarksDedos] #creo una lista con las coordenadas
+  dfDedos=dfLandmarks.iloc[listaLandmarksDedos] #esto, y lo de abajo, lo hago solo para tener un df y poder graficarlo.
+  dfDedoscopia=dfDedos.copy()
+  dfDedoscopia['Z']=0
+  dfDedoscopia['TIPO']='DEDOS'
+  dfDedoscopia['TAMAÑO']=tamañoLandmark
+  dfDedoscopia['Y'].round(1)
+  if listaDedos[0]>listaDedos[1]:
+      tipoPie='Egipcio'
+  elif listaDedos[0]<listaDedos[1] and listaDedos[1]>listaDedos[2]:
+      tipoPie='Griego'
+  elif listaDedos[0]<listaDedos[1] and listaDedos[1]<listaDedos[2]:
+      tipoPie='Cuadrado'
+  if 9 in listaLandmarksDedos:
+    y=dfLandmarks.iloc[9]['Y'] #Y que ubica el soft para el dedo chiquito
+    alturaPuntaPie=df[df['Y']>(y-20)]['Z'].max() #le resto 2cm hacia el talón
+  else:
+    maxy=df['Y'].max()
+    alturaPuntaPie=df[df['Y']>(maxy-30)]['Z'].max()
+  if 9 in listaLandmarksDedos and 7 in listaLandmarksDedos:
+    if dfLandmarks.iloc[7]['X']>dfLandmarks.iloc[9]['X']:
+      izqOder='IZQUIERDO'
+    else:
+      izqOder='DERECHO'
+  alturaMitadPie=df[df['Y']==(df['Y'].max()/2)]['Z'].max()
+  return dfDedoscopia,tipoPie,alturaPuntaPie,izqOder,alturaMitadPie
+
+def chequeoData(df):
+  if df.isnull().values.any():
+    print('Hay valores nulos en el dataframe')
+  else:
+    #si hay algun string en el dataframe encunetro la fila
+    for i in range(len(df)):
+      if df.iloc[i].apply(type).eq(str).any():
+        print('Hay strings en el dataframe en la fila ',i)
+        break
+  return None
+
+def izqOder(df,dflandmarks):
+  #si el lado izquierdo es mayor que el derecho, es un pie izquierdo
+  if dflandmarks['X'].max()>dflandmarks['X'].min():
+    lado='IZQUIERDO'
+  else:
+    lado='DERECHO'
+  return lado
+
+def Metatarso(df,maxx,maxy):
+  minx=df[df['Y']>maxy/2]['X'].min()
   maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
   maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
   iniMetaTarso=[minx,maxyMetatarzoIn,maxzMetatarzoIn]#<--------------------vector inicio del metatarzo, izquierda

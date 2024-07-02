@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso
+from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie
 
 #defino variables a utilizar
 lZmin=[]
@@ -16,7 +16,7 @@ xyz=["X","Y","Z"]
 datosPersonales=['TAG','USUARIO','FECHA','LUGAR','OBSERVACIONES']
 PerimetrosAMedir=['PERIM ENTRADA','PERIM EMPEINE','PERIM METATARSO','PERIM TALON-ENTRADA','PERIM INICIO TALON-ENTRADA','PERIM TALON-EMPEINE','PERIM INICIO TALON-EMPEINE']
 MedidasAbsolutas=['LARGO','ANCHO TOTAL','ALTURA ENTRADA','ALTURA EMPEINE','ALTURA TALON','ALTURA ARCO']
-MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','TIPO DE PIE']
+MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
 listaCsv=datosPersonales+PerimetrosAMedir+MedidasAbsolutas+MedidasCalculadas
 
 dfMedicion=pd.DataFrame(columns=listaCsv)
@@ -24,12 +24,11 @@ tamañoDato=8
 tamañoLandmark=8
 indice=0
 #comienzo
-escaneo='archivos/FootProfile2.xyz'
-Landmarks='archivos/Landmark2.xyz'
+escaneo='archivos/FootProfile1.xyz'
+Landmarks='archivos/Landmark1.xyz'
 df0=np.round(pd.read_table(escaneo,skiprows=2,delim_whitespace=(True),names=xyz),1)
 dfLandmarks=np.round(pd.read_table(Landmarks,delim_whitespace=(True),names=xyz),1)
-#indexDrop=[0,3,4,6,8,10,13,15] #landmarks que me parecieron NO útiles
-#dfLandmarks=dfLandmarks.drop(indexDrop) #indices dropeados
+
 df=df0.copy()
 for v in xyz: #me fijo si hay valores negativos, si es así llevo todos los valores a positivos
     minv=df[v].min()   
@@ -47,7 +46,7 @@ maxy=df['Y'].max()
 minz=df['Z'].min()
 maxz=df['Z'].max()
 #------------------------------------------------------------------------------
-iniMetaTarso,finMetaTarso,anchoMetatarsiano=Metatarso(df,minx,maxx)
+iniMetaTarso,finMetaTarso,anchoMetatarsiano=Metatarso(df,maxx,maxy)
 dfMedicion.at[0,'ANCHO METATARSICO']=np.round(anchoMetatarsiano,1)
 dfInMetaTarso=pd.DataFrame([iniMetaTarso],columns=xyz)
 dfFinMetaTarso=pd.DataFrame([finMetaTarso],columns=xyz)
@@ -58,17 +57,17 @@ xAlturaMaxTalon=df[(df['Z']==AlturaMaxTalon) & (df['Y']==miny)]['X'].mean()
 arrayAlturaTalon=[xAlturaMaxTalon,0,AlturaMaxTalon]#<--------------------array alturaTalon
 dfAlturaTalon=pd.DataFrame([arrayAlturaTalon],columns=xyz)
 #------------------------------------------------------------------------------
-#distanciaTobillo=np.abs(dfLandmarks.iloc[1]['X']-dfLandmarks.iloc[2]['X'])#<--------------------largo del ancho del tobillo
 LargoPie=maxy-miny
 dfMedicion.at[0,'LARGO']=LargoPie
 AnchoPie=maxx-minx
 dfMedicion.at[0,'ANCHO TOTAL']=AnchoPie
 arrayEntradaPie=dfLandmarks.iloc[11]#<--------------------array entradaPie
-Zentrada=df[df['Y']==arrayEntradaPie['Y']]['Z'].max()
-Xentrada=df[(df['Y']==arrayEntradaPie['Y']) & (df['Z']==Zentrada)]['X'].mean()
-#reasigno los valores de X y Z para un valor máximo de Z (en ocasiones el landmark está corrido en el sentido X)
-arrayEntradaPie['X']=Xentrada
-arrayEntradaPie['Z']=Zentrada
+if len(df[df['Y']==arrayEntradaPie['Y']])>1:
+    Zentrada=df[df['Y']==arrayEntradaPie['Y']]['Z'].max()
+    Xentrada=df[(df['Y']==arrayEntradaPie['Y']) & (df['Z']==Zentrada)]['X'].mean()
+    #reasigno los valores de X y Z para un valor máximo de Z (en ocasiones el landmark está corrido en el sentido X)
+    arrayEntradaPie['X']=Xentrada
+    arrayEntradaPie['Z']=Zentrada
 dfEntradaPie=pd.DataFrame([arrayEntradaPie],columns=xyz)
 dfMedicion.at[0,'ALTURA ENTRADA']=arrayEntradaPie['Z']
 #------------------------------------------------------------------------------
@@ -94,20 +93,10 @@ dfMedicion.at[0,'LARGO INICIO TALON-EMPEINE']=np.round(distanciaEmpeineInicioTal
 distanciaEntrada_IniciTalon=norma(arrayEntradaPie,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
 dfMedicion.at[0,'LARGO INICIO TALON-ENTRADA']=np.round(distanciaEntrada_IniciTalon,1)
 listaLandmarksDedos=[7,8,20,21,9]
-listaDedos=[dfLandmarks.iloc[dedo]['Y'].round(1) for dedo in listaLandmarksDedos]
-dfDedos=dfLandmarks.iloc[listaLandmarksDedos] #esto, y lo de abajo, lo hago solo para tener un df y poder graficarlo.
-dfDedoscopia=dfDedos.copy()
-dfDedoscopia['Z']=0
-dfDedoscopia['TIPO']='DEDOS'
-dfDedoscopia['TAMAÑO']=tamañoLandmark
-dfDedoscopia['Y'].round(1)
-if listaDedos[0]>listaDedos[1]:
-    tipoPie='Egipcio'
-elif listaDedos[0]<listaDedos[1] and listaDedos[1]>listaDedos[2]:
-    tipoPie='Griego'
-elif listaDedos[0]<listaDedos[1] and listaDedos[1]<listaDedos[2]:
-    tipoPie='Cuadrado'
-dfMedicion.at[0,'TIPO DE PIE']=tipoPie
+dfDedoscopia,tipoDePie,alturaPuntaPie,izqOder,alturaMitadPie=tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark)
+dfMedicion.at[0,'TIPO DE PIE']=tipoDePie
+dfMedicion.at[0,'ALTURA PUNTA DE PIE']=tipoDePie
+dfMedicion.at[0,'PIE IZQ/DER']=izqOder
 
 df['TIPO']='DATO'
 df['TAMAÑO']=tamañoDato
@@ -127,7 +116,6 @@ dfAlturaTalon['TAMAÑO']=tamañoLandmark
 df=pd.concat([df,dfAlturaTalon],ignore_index=True)
 
 df=df.round(1)
-#defino un dfLandmarks3 que sea dfLandmarks pero que según el index tenga un ['TIPO']= igual al numero de index
 dfLandmarks3=dfLandmarks.copy()
 for i in range(len(dfLandmarks3)):
     dfLandmarks3.at[i,'TIPO']=str(i)
@@ -138,23 +126,43 @@ dfLandmarks2=pd.DataFrame([dfLandmarks.iloc[7]],columns=xyz)
 dfLandmarks2['TIPO']='LANDMARK'
 dfLandmarks2['TAMAÑO']=tamañoLandmark
 
-dfCircEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
-dfCircEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
-dfcircMetaTarso,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInMetaTarso,dfFinMetaTarso],'PERIMETRO METATARSO',diagonal=True,paso=0.2,plano='ZX') #medicion en el plano Zx del perimetro
+dfCircEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.6,plano='ZX') #medicion en el plano Zx del perimetro
+dfCircEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.6,plano='ZX') #medicion en el plano Zx del perimetro
+dfcircMetaTarso,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInMetaTarso,dfFinMetaTarso],'PERIMETRO METATARSO',diagonal=True,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
 dfCircTalonEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfAlturaTalon,dfEntradaPie],'PERIMETRO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircInTalonEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
 dfCircInTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
 
 for i in range(len(MedidasPerim)):
     dfMedicion.at[0,PerimetrosAMedir[i]]=MedidasPerim[i]
-dfMedicion.to_csv('Mediciones.csv',index=False)
+#si ya existe el archivo lo abro y le agrego la nueva medicion, si no existe locreo y vuelco la info que hay en dfMedicion
+try:
+    dfViejo=pd.read_csv('Mediciones.csv')
+    dfMedicion=pd.concat([dfViejo,dfMedicion],ignore_index=True)
+    dfMedicion.to_csv('Mediciones.csv',index=False)
+except:
+    dfMedicion.to_csv('Mediciones.csv',index=False)
 
-df=pd.read_csv('Mediciones.csv',)
-#le agrego nombre a las columnas 
-#separo el df según tenga "," o " "
+'''
+dfFinal=df[df['Z']<10]
+dfFinal['Z']=0
+mitad=df['X'].max()/2
+outline=[]
+dfOutline=pd.DataFrame(columns=xyz)
+for y in (dfFinal['Y'].unique()):
+    x=df[df['Y']==y]['X']
+    if x.max()>mitad:
+        outline.append([x.max(),y,0])
+    if x.min()<mitad:
+        outline.append([x.min(),y,0])
+    #convierto outline en un df
+dfOutline=pd.DataFrame(outline,columns=xyz)
+dfOutline['TIPO']='OUTLINE'
+dfOutline['TAMAÑO']=tamañoLandmark
+'''
 
-dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
 fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
 fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
 fig.show()
