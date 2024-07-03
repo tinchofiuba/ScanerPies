@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 #1-altura de la punta del pie
 #2-tipo de pie
 #3-pie izquierdo o derecho
-def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark): 
+def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark,dfMedicion): 
   listaDedos=[dfLandmarks.iloc[dedo]['Y'].round(1) for dedo in listaLandmarksDedos] #creo una lista con las coordenadas
   dfDedos=dfLandmarks.iloc[listaLandmarksDedos] #esto, y lo de abajo, lo hago solo para tener un df y poder graficarlo.
   dfDedoscopia=dfDedos.copy()
@@ -38,8 +38,11 @@ def tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark):
   ymedia=df['Y'].max()/2
   dfYmedia=df[(df['Y']>ymedia-1) & (df['Y']<ymedia+1)]['Z']
   alturaMitadPie=dfYmedia.max()
-
-  return dfDedoscopia,tipoPie,alturaPuntaPie,izqOder,alturaMitadPie
+  dfMedicion.at[0,'TIPO DE PIE']=tipoPie
+  dfMedicion.at[0,'ALTURA PUNTA DE PIE']=alturaPuntaPie
+  dfMedicion.at[0,'PIE IZQ/DER']=izqOder
+  dfMedicion.at[0,'ALTURA MITAD DEL PIE']=alturaMitadPie
+  return dfDedoscopia,dfMedicion,izqOder
 
 def chequeoData(df):
   if df.isnull().values.any():
@@ -60,7 +63,7 @@ def izqOder(df,dflandmarks):
     lado='DERECHO'
   return lado
 
-def Metatarso(df,maxx,maxy,izqOder):
+def Metatarso(df,maxx,maxy,izqOder,dfMedicion):
   minx=df[df['Y']>maxy/2]['X'].min()
   maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
   maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
@@ -74,10 +77,16 @@ def Metatarso(df,maxx,maxy,izqOder):
   if izqOder=='IZQUIERDO':
     z=df[(df['Y']>iniMetaTarso[1]-1) & (df['Y']<iniMetaTarso[1]+1)]['Z'].max()
     alturaMetatarso=z.max()
+    #si se da esta desigualdad significa que la punta del pie tiene un punto más alto que el metatarso, lo que sería una anomalia/error
+    #se guarda el la columna anomalías
+    alturaDelanteraMetatarso=df[df['Y']>iniMetaTarso[1]]['Z'].max() 
+    
   elif izqOder=='DERECHO':
     z=df[(df['Y']>finMetaTarso[1]-1) & (df['Y']<finMetaTarso[1]+1)]['Z'].max()
     alturaMetatarso=z.max()
-  return iniMetaTarso,finMetaTarso,anchoMetatarsiano,alturaMetatarso
+  dfMedicion.at[0,'ANCHO METATARSICO']=np.round(anchoMetatarsiano,1)
+  dfMedicion.at[0,'ALTURA MAX METATARSO']=np.round(alturaMetatarso,1)
+  return iniMetaTarso,finMetaTarso,dfMedicion
 
 def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     df_y=df[df['Y']<limiteY/2]
