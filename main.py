@@ -79,5 +79,5 @@ ui.comboBox.currentIndexChanged.connect(lambda: cambiarOperador(ui))
 #si apreto el boton pushButton se ejecuta la funcion "infoUsuario"
 ui.pushButton_4.clicked.connect(lambda: infoUsuario(ui))
 #si apreto el boton "Analizar y extraer medidas" se ejecuta la función "analizar"
-ui.pushButton.clicked.connect(lambda: analisis(df0,dflandmarks))
+ui.pushButton.clicked.connect(lambda: comenzarAnalisis())
 sys.exit(app.exec_())
