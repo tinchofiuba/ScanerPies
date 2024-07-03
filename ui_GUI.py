@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'GUIpbsFtO.ui'
+## Form generated from reading UI file 'GUIAnuPyn.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -19,7 +19,6 @@ class Ui_Dialog(object):
             Dialog.setObjectName(u"Dialog")
         Dialog.resize(400, 300)
         self.comboBox = QComboBox(Dialog)
-        self.comboBox.addItem("")
         self.comboBox.addItem("")
         self.comboBox.addItem("")
         self.comboBox.addItem("")
@@ -50,7 +49,16 @@ class Ui_Dialog(object):
         self.label_3.setGeometry(QRect(80, 100, 311, 21))
         self.label_4 = QLabel(Dialog)
         self.label_4.setObjectName(u"label_4")
-        self.label_4.setGeometry(QRect(20, 180, 371, 21))
+        self.label_4.setGeometry(QRect(20, 180, 161, 21))
+        self.textEdit = QTextEdit(Dialog)
+        self.textEdit.setObjectName(u"textEdit")
+        self.textEdit.setGeometry(QRect(190, 170, 201, 121))
+        self.label_5 = QLabel(Dialog)
+        self.label_5.setObjectName(u"label_5")
+        self.label_5.setGeometry(QRect(250, 140, 91, 21))
+        self.pushButton_4 = QPushButton(Dialog)
+        self.pushButton_4.setObjectName(u"pushButton_4")
+        self.pushButton_4.setGeometry(QRect(330, 20, 61, 21))
 
         self.retranslateUi(Dialog)
 
@@ -60,11 +68,10 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
         self.comboBox.setItemText(0, QCoreApplication.translate("Dialog", u"Operador/a", None))
-        self.comboBox.setItemText(1, QCoreApplication.translate("Dialog", u"PT", None))
-        self.comboBox.setItemText(2, QCoreApplication.translate("Dialog", u"JA", None))
-        self.comboBox.setItemText(3, QCoreApplication.translate("Dialog", u"VR", None))
-        self.comboBox.setItemText(4, QCoreApplication.translate("Dialog", u"VL", None))
-        self.comboBox.setItemText(5, QCoreApplication.translate("Dialog", u"CL", None))
+        self.comboBox.setItemText(1, QCoreApplication.translate("Dialog", u"J.Armesto", None))
+        self.comboBox.setItemText(2, QCoreApplication.translate("Dialog", u"C.Lourenzo", None))
+        self.comboBox.setItemText(3, QCoreApplication.translate("Dialog", u"P.Thompson", None))
+        self.comboBox.setItemText(4, QCoreApplication.translate("Dialog", u"V.Rostan", None))
 
         self.label.setText(QCoreApplication.translate("Dialog", u"LUGAR", None))
         self.pushButton.setText(QCoreApplication.translate("Dialog", u"Cargar archivos", None))
@@ -72,6 +79,8 @@ class Ui_Dialog(object):
         self.label_2.setText(QCoreApplication.translate("Dialog", u"No se observan errores", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"Analizar y extraer medidas", None))
         self.label_3.setText(QCoreApplication.translate("Dialog", u"default: Escritorio", None))
-        self.label_4.setText(QCoreApplication.translate("Dialog", u"Errores: 0", None))
+        self.label_4.setText(QCoreApplication.translate("Dialog", u"ERRORES: 0", None))
+        self.label_5.setText(QCoreApplication.translate("Dialog", u"OBSERVACIONES", None))
+        self.pushButton_4.setText(QCoreApplication.translate("Dialog", u"INFO", None))
     # retranslateUi
 
