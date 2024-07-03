@@ -5,9 +5,14 @@ import pandas as pd
 import numpy as np
 import os   
 import json
-from 
+from analisisPie import analisis
 
 num_cores = os.cpu_count() #<-------------------número de núcleos de la CPU
+
+def comenzarAnalisis(): #falta definir los parametros de entrada para poder leer el df y dflandmark
+    df0=pd.read_csv('df0.csv')
+    dfLandmarks=pd.read_csv('dflandmarks.csv')
+    analisis(df0,dfLandmarks)
 
 #si apreto el boton pushButton_2 quiero se abre una ventana para seleccionar la dirección de guardado
 def cambiarDireccionCsv(GUI):
@@ -74,5 +79,5 @@ ui.comboBox.currentIndexChanged.connect(lambda: cambiarOperador(ui))
 #si apreto el boton pushButton se ejecuta la funcion "infoUsuario"
 ui.pushButton_4.clicked.connect(lambda: infoUsuario(ui))
 #si apreto el boton "Analizar y extraer medidas" se ejecuta la función "analizar"
-ui.pushButton.clicked.connect(lambda: analizarPie(ui,landmarks))
+ui.pushButton.clicked.connect(lambda: analisis(df0,dflandmarks))
 sys.exit(app.exec_())
