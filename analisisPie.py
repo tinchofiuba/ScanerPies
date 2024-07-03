@@ -5,15 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie
 import time
-import ipinfo
-
-'''access_token = 'tu_token_de_acceso'
-handler = ipinfo.getHandler(access_token)
-details = handler.getDetails()
-print(details.city)
-print(details.loc)  # Latitud y longitud'''
-
-
 
 #defino variables a utilizar
 lZmin=[]
