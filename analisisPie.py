@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie
+from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie,alturaTalon,largoAnchoEntrada
 import time
 
 #defino variables a utilizar
@@ -16,7 +16,7 @@ def analisis(df0,dfLandmarks):
     PerimetrosAMedir=['PERIM ENTRADA','PERIM EMPEINE','PERIM METATARSO','PERIM TALON-ENTRADA','PERIM INICIO TALON-ENTRADA','PERIM TALON-EMPEINE','PERIM INICIO TALON-EMPEINE']
     MedidasAbsolutas=['LARGO','ANCHO TOTAL','ALTURA ENTRADA','ALTURA EMPEINE','ALTURA TALON','ALTURA ARCO']
     MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MAX METATARSO','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
-    Anomalias=['ANOMALIAS']
+    Anomalias=['ANOMALIAS','APERTURA']
     listaCsv=datosPersonales+PerimetrosAMedir+MedidasAbsolutas+MedidasCalculadas+Anomalias
 
     dfMedicion=pd.DataFrame(columns=listaCsv)
@@ -64,25 +64,18 @@ def analisis(df0,dfLandmarks):
     dfInMetaTarso=pd.DataFrame([iniMetaTarso],columns=xyz)
     dfFinMetaTarso=pd.DataFrame([finMetaTarso],columns=xyz)
     #------------------------------------------------------------------------------
-    AlturaMaxTalon=df[df['Y']==miny]['Z'].min().round(1)
-    dfMedicion.at[0,'ALTURA TALON']=AlturaMaxTalon
-    xAlturaMaxTalon=df[(df['Z']==AlturaMaxTalon) & (df['Y']==miny)]['X'].mean()
+    #ENCUENTRO LA ALTURA DEL TALON Y EL VALOR DE "X" DE ESE PUNTO
+    #ESTE VALOR DE "X" LO USO COMO SIMETRÍA EN EL EJE "Y"
+    xAlturaMaxTalon,AlturaMaxTalon,dfMedicion=alturaTalon(df,miny,dfMedicion)
     arrayAlturaTalon=[xAlturaMaxTalon,0,AlturaMaxTalon]#<--------------------array alturaTalon
     dfAlturaTalon=pd.DataFrame([arrayAlturaTalon],columns=xyz)
     #------------------------------------------------------------------------------
-    LargoPie=np.round(maxy-miny,1)
-    dfMedicion.at[0,'LARGO']=LargoPie
-    AnchoPie=maxx-minx
-    dfMedicion.at[0,'ANCHO TOTAL']=AnchoPie
-    arrayEntradaPie=dfLandmarks.iloc[11]#<--------------------array entradaPie
-    if len(df[df['Y']==arrayEntradaPie['Y']])>1:
-        Zentrada=df[df['Y']==arrayEntradaPie['Y']]['Z'].max()
-        Xentrada=df[(df['Y']==arrayEntradaPie['Y']) & (df['Z']==Zentrada)]['X'].mean()
-        #reasigno los valores de X y Z para un valor máximo de Z (en ocasiones el landmark está corrido en el sentido X)
-        arrayEntradaPie['X']=Xentrada
-        arrayEntradaPie['Z']=Zentrada
-    dfEntradaPie=pd.DataFrame([arrayEntradaPie],columns=xyz)
-    dfMedicion.at[0,'ALTURA ENTRADA']=arrayEntradaPie['Z']
+    #ENCUENTRO:
+    #1-EL LARGO DEL PIE
+    #2-EL ANCHO TOTAL DEL PIE
+    #3-LA ALTURA DE LA ENTRADA DEL PIE
+    arrayEntradaPie,dfEntradaPie,dfMedicion=largoAnchoEntrada(df,dfLandmarks,maxy,miny,maxx,minx,xyz,dfMedicion)
+
     #------------------------------------------------------------------------------
     arrayCentroTobillo=dfLandmarks.iloc[12]
     distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón

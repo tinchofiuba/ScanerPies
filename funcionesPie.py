@@ -80,13 +80,81 @@ def Metatarso(df,maxx,maxy,izqOder,dfMedicion):
     #si se da esta desigualdad significa que la punta del pie tiene un punto más alto que el metatarso, lo que sería una anomalia/error
     #se guarda el la columna anomalías
     alturaDelanteraMetatarso=df[df['Y']>iniMetaTarso[1]]['Z'].max() 
-    
+    if alturaDelanteraMetatarso>alturaMetatarso:
+      dfMedicion.at[0,'ANOMALIAS']='puntaPieAlta'
   elif izqOder=='DERECHO':
     z=df[(df['Y']>finMetaTarso[1]-1) & (df['Y']<finMetaTarso[1]+1)]['Z'].max()
     alturaMetatarso=z.max()
+    #si se da esta desigualdad significa que la punta del pie tiene un punto más alto que el metatarso, lo que sería una anomalia/error
+    #se guarda el la columna anomalías
+    alturaDelanteraMetatarso=df[df['Y']>finMetaTarso[1]]['Z'].max() 
+    if alturaDelanteraMetatarso>alturaMetatarso:
+      dfMedicion.at[0,'ANOMALIAS']='puntaPieAlta'
   dfMedicion.at[0,'ANCHO METATARSICO']=np.round(anchoMetatarsiano,1)
   dfMedicion.at[0,'ALTURA MAX METATARSO']=np.round(alturaMetatarso,1)
   return iniMetaTarso,finMetaTarso,dfMedicion
+
+def alturaTalon(df,miny,dfMedicion):
+    AlturaMaxTalon=df[df['Y']==miny]['Z'].min().round(1)
+    dfMedicion.at[0,'ALTURA TALON']=AlturaMaxTalon
+    xAlturaMaxTalon=df[(df['Z']==AlturaMaxTalon) & (df['Y']==miny)]['X'].mean()
+    return xAlturaMaxTalon,AlturaMaxTalon,dfMedicion
+
+def ecRecta(p1,p2):
+  m=(p2[1]-p1[1])/(p2[0]-p1[0])
+  b=p1[1]-m*p1[0]
+  return m,b
+
+def anguloApertura(df):
+  minxTrasero=df[df['Y']<df['Y'].max()/2]['X'].min()
+  yminxTrasero=df[df['X']==minxTrasero]['Y'].min()
+  p1=[minxTrasero,yminxTrasero]
+  minxDelantero=df[df['Y']>df['Y'].max()/2]['X'].min()
+  yminxDelantero=df[df['X']==minxDelantero]['Y'].max()
+  p2=[minxDelantero,yminxDelantero]
+  #-------------------------------
+  maxxTrasero=df[df['Y'<df['Y'].max()/2]]['X'].max()
+  ymaxxTrasero=df[df['X']==maxxTrasero]['Y'].min()
+  p3=[maxxTrasero,ymaxxTrasero]
+  maxxDelantero=df[df['Y']>df['Y'].max()/2]['X'].max()
+  ymaxxDelantero=df[df['X']==maxxDelantero]['Y'].max()
+  p4=[maxxDelantero,ymaxxDelantero]
+  m1,b1=ecRecta(p1,p2)
+  m2,b2=ecRecta(p3,p4)
+  #con las dos rectas saco el angulo entre ellas
+  apertura=np.arctan((m2-m1)/(1+m1*m2))
+  return apertura
+
+def largoAnchoEntrada(df,dfLandmarks,maxy,miny,maxx,minx,xyz,dfMedicion):
+    LargoPie=np.round(maxy-miny,1)
+    dfMedicion.at[0,'LARGO']=LargoPie
+    AnchoPie=maxx-minx
+    dfMedicion.at[0,'ANCHO TOTAL']=AnchoPie
+    #si se da la siguiente desigualdad significa que hay una anomalía con el ancho del pie.
+    #natualmente el ancho del pie está en la parte delantera del pie.
+    #En caso contrario se guarda en la columna anomalías como "pieAnchoTrasero"
+    yxMinimo=df[df['X']==minx]['Y'].min()
+    if yxMinimo<(df['Y'].max()/2):
+      #si la columna ANOMALIAS no está vacía le agrego ",pieAnchoTrasero" asi separo las anomalias
+      if dfMedicion.at[0,'ANOMALIAS']!='':
+          dfMedicion.at[0,'ANOMALIAS']+=',pieAnchoTrasero'
+      else:
+          dfMedicion.at[0,'ANOMALIAS']='pieAnchoTrasero'
+    #me fijo que tipo de pie es, osea, si la apertura hacie adelante aumenta o disminuye
+    apertura=anguloApertura(df)
+    #en caso de que la apertura sea negativa significa que el pie se ensancha hacia adelante
+    dfMedicion.at[0,'APERTURA']=apertura
+    arrayEntradaPie=dfLandmarks.iloc[11]#<--------------------array entradaPie
+    if len(df[df['Y']==arrayEntradaPie['Y']])>1:
+        Zentrada=df[df['Y']==arrayEntradaPie['Y']]['Z'].max()
+        Xentrada=df[(df['Y']==arrayEntradaPie['Y']) & (df['Z']==Zentrada)]['X'].mean()
+        #reasigno los valores de X y Z para un valor máximo de Z 
+        #(en ocasiones el landmark está corrido en el sentido X)
+        arrayEntradaPie['X']=Xentrada
+        arrayEntradaPie['Z']=Zentrada
+    dfEntradaPie=pd.DataFrame([arrayEntradaPie],columns=xyz)
+    dfMedicion.at[0,'ALTURA ENTRADA']=arrayEntradaPie['Z']
+    return arrayEntradaPie,dfEntradaPie,dfMedicion
 
 def InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,limiteY):
     df_y=df[df['Y']<limiteY/2]
