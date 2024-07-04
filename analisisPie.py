@@ -149,24 +149,6 @@ def analisis(df0,dfLandmarks):
     except:
         dfMedicion.to_csv('Mediciones.csv',index=False)
 
-    '''
-    dfFinal=df[df['Z']<10]
-    dfFinal['Z']=0
-    mitad=df['X'].max()/2
-    outline=[]
-    dfOutline=pd.DataFrame(columns=xyz)
-    for y in (dfFinal['Y'].unique()):
-        x=df[df['Y']==y]['X']
-        if x.max()>mitad:
-            outline.append([x.max(),y,0])
-        if x.min()<mitad:
-            outline.append([x.min(),y,0])
-        #convierto outline en un df
-    dfOutline=pd.DataFrame(outline,columns=xyz)
-    dfOutline['TIPO']='OUTLINE'
-    dfOutline['TAMAÑO']=tamañoLandmark
-    '''
-
     fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
     fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
     fig.show()

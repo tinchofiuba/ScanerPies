@@ -18,10 +18,17 @@ class MiVentana(QDialog):
         self.archivos = []
         # Conectar señales a métodos
         self.ui.pushButton_2.clicked.connect(lambda: self.cambiarDireccionCsv())
-        self.ui.comboBox.currentIndexChanged.connect(lambda: self.cambiarOperador())
+        self.ui.comboBox.currentIndexChanged.connect(lambda: self.chequeoBotones("combobox")) #si cambia el combobox
+        self.ui.lineEdit.textChanged.connect(lambda: self.chequeoBotones("lineedit")) #si cambia el lineedit
+        #en caso de que sucedan estas 2 coasa se habilitará el boton para predecir las medias del pie   
         self.ui.pushButton_4.clicked.connect(lambda: self.infoUsuario())
         #self.ui.pushButton_3.clicked.connect(lambda: self.comenzarAnalisis())
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos())
+        if self.ui.combo
+        if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='': #si hay una dirección cargada y un operador seleccionado doy acceso a los demas botones
+            self.ui.pushButton_3.setEnabled(True)
+        else:
+            self.ui.pushButton_3.setEnabled(False)
 
     def cargarConfiguracionInicial(self):
         if os.path.exists('back.json'):
