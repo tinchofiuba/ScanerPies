@@ -21,6 +21,7 @@ class MiVentana(QDialog):
         self.lineasErroneas=[]
         self.largoLandmarks=23 #ver bien cuantas dimensiones tiene
         self.ui.pushButton_5.setEnabled(False)
+        self.descripcionErrores=""
         # Conectar señales a métodos
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
             self.ui.pushButton.setEnabled(True)
@@ -95,18 +96,17 @@ class MiVentana(QDialog):
             texto+=lineaMensaje if i==0 else lineaMensaje
         return texto
     
-    def chequeoDatos(self,df):
+    def chequeoDatosLandmark(self,df):
         self.listaArchivosConError=[]
         self.listaErrores=[]
-        #me fijo si en los dos archivos hay datos tipo "Nan"
         df=pd.read_csv(df,sep=',',header=None)
         errores=0
-        descripcion=""
+        self.descripcionErrores=""
         nombreArchivo=os.path.basename(df)
         if df.isnull().dvalues.any():
             errores==1
             self.listaArchivosConError.append(nombreArchivo)
-            descripcion+="Hay datos tipo Nan"
+            self.descripcionErrores+="Hay datos tipo Nan"
             for i in range(len(df)):
                 if df.iloc[i].isnull().values.any():
                     self.lineasErroneas.append(i)
@@ -115,14 +115,13 @@ class MiVentana(QDialog):
             if errores==0:
                 self.listaArchivosConError.append(nombreArchivo)
                 errores==1
-            descripcion+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
-        if "landmark" in nombreArchivo:
-            if len(df)!=self.largoLandmarks:
+            self.descripcionErrores+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
+        if len(df)!=self.largoLandmarks:
                 lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
                 if errores==0:
                     self.listaArchivosConError.append(nombreArchivo)
                     errores==1
-                descripcion+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
+                self.descripcionErrores+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
 
     def cargarArchivos(self):
         archivos, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
