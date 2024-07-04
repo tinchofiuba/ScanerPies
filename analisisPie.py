@@ -175,5 +175,3 @@ def analisis(df0,dfLandmarks):
 
 
 
-
-
