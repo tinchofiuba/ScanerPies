@@ -113,7 +113,7 @@ def anguloApertura(df):
   yminxDelantero=df[df['X']==minxDelantero]['Y'].max()
   p2=[minxDelantero,yminxDelantero]
   #-------------------------------
-  maxxTrasero=df[df['Y'<df['Y'].max()/2]]['X'].max()
+  maxxTrasero=df[df['Y']<df['Y'].max()/2]['X'].max()
   ymaxxTrasero=df[df['X']==maxxTrasero]['Y'].min()
   p3=[maxxTrasero,ymaxxTrasero]
   maxxDelantero=df[df['Y']>df['Y'].max()/2]['X'].max()

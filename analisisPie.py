@@ -171,7 +171,12 @@ def analisis(df0,dfLandmarks):
     fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
     fig.show()
 
-
-
-
+#solo ejecuto esto cuando corro este script, sino no
+if __name__ == "__main__":
+    escaneo='archivos/FootProfile1.xyz'
+    Landmarks='archivos/Landmark1.xyz'
+    xyz=["X","Y","Z"]
+    df0=np.round(pd.read_table(escaneo,skiprows=2,delim_whitespace=(True),names=xyz),1)
+    dfLandmarks=np.round(pd.read_table(Landmarks,delim_whitespace=(True),names=xyz),1)
+    analisis(df0,dfLandmarks)
 
