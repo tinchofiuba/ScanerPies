@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'GUIRjdCud.ui'
+## Form generated from reading UI file 'GUISvUDXC.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -11,7 +11,7 @@
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
-from PySide2.QtWidgets import QFileDialog
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -40,7 +40,7 @@ class Ui_Dialog(object):
         self.pushButton_2.setGeometry(QRect(10, 90, 121, 31))
         self.label_2 = QLabel(Dialog)
         self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(130, 60, 261, 21))
+        self.label_2.setGeometry(QRect(130, 50, 261, 31))
         self.pushButton_3 = QPushButton(Dialog)
         self.pushButton_3.setObjectName(u"pushButton_3")
         self.pushButton_3.setGeometry(QRect(10, 160, 151, 31))
@@ -58,7 +58,10 @@ class Ui_Dialog(object):
         self.label_5.setGeometry(QRect(250, 160, 91, 21))
         self.pushButton_4 = QPushButton(Dialog)
         self.pushButton_4.setObjectName(u"pushButton_4")
-        self.pushButton_4.setGeometry(QRect(330, 20, 61, 21))
+        self.pushButton_4.setGeometry(QRect(330, 10, 61, 31))
+        self.pushButton_5 = QPushButton(Dialog)
+        self.pushButton_5.setObjectName(u"pushButton_5")
+        self.pushButton_5.setGeometry(QRect(140, 90, 121, 31))
 
         self.retranslateUi(Dialog)
 
@@ -76,11 +79,12 @@ class Ui_Dialog(object):
         self.label.setText(QCoreApplication.translate("Dialog", u"LUGAR", None))
         self.pushButton.setText(QCoreApplication.translate("Dialog", u"Cargar archivos", None))
         self.pushButton_2.setText(QCoreApplication.translate("Dialog", u"Modificar ruta del csv", None))
-        self.label_2.setText(QCoreApplication.translate("Dialog", u"No se observan errores", None))
+        self.label_2.setText(QCoreApplication.translate("Dialog", u"No se cargaron archivos", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"Analizar y extraer medidas", None))
         self.label_3.setText(QCoreApplication.translate("Dialog", u"default: Escritorio", None))
         self.label_4.setText(QCoreApplication.translate("Dialog", u"ERRORES: 0", None))
         self.label_5.setText(QCoreApplication.translate("Dialog", u"OBSERVACIONES", None))
         self.pushButton_4.setText(QCoreApplication.translate("Dialog", u"INFO", None))
+        self.pushButton_5.setText(QCoreApplication.translate("Dialog", u"Limpiar datos ", None))
     # retranslateUi
 
