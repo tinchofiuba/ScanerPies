@@ -18,10 +18,11 @@ class MiVentana(QDialog):
         self.archivos = []
         self.listaArchivosConError=[]
         self.listaErrores=[]
-        self.lineasErroneas=[]
-        self.largoLandmarks=23 #ver bien cuantas dimensiones tiene
+        self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
         self.ui.pushButton_5.setEnabled(False)
         self.descripcionErrores=""
+        self.dictErrores={'landmarks':[],'scaneo':[],'filasLandmark':[],'filasScaneo':[],'nombreLandmark':[],'nombreScaneo':[]} #creo un dict que almacena los archivos erroneos y las filas  
+        self.dictDescripciones={'landmarks':[],'scaneo':[]}
         # Conectar señales a métodos
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
             self.ui.pushButton.setEnabled(True)
@@ -34,8 +35,12 @@ class MiVentana(QDialog):
         #en caso de que sucedan estas 2 coasa se habilitará el boton para predecir las medias del pie   
         self.ui.pushButton_4.clicked.connect(lambda: self.infoUsuario())
         #self.ui.pushButton_3.clicked.connect(lambda: self.comenzarAnalisis())
-        self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos())
-    
+        self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
+        self.ui.pushButton_5.clicked.connect(lambda: self.limpiarDatos())
+
+    def limpiarDatos(self):
+        print("limpiando datos")
+                                             
     def chequeoBotones(self, tipo):
         if tipo=="combobox":
             self.cambiarOperador()
@@ -96,40 +101,75 @@ class MiVentana(QDialog):
             texto+=lineaMensaje if i==0 else lineaMensaje
         return texto
     
-    def chequeoDatosLandmark(self,df):
-        self.listaArchivosConError=[]
-        self.listaErrores=[]
-        df=pd.read_csv(df,sep=',',header=None)
-        errores=0
-        self.descripcionErrores=""
-        nombreArchivo=os.path.basename(df)
-        if df.isnull().dvalues.any():
-            errores==1
-            self.listaArchivosConError.append(nombreArchivo)
-            self.descripcionErrores+="Hay datos tipo Nan"
-            for i in range(len(df)):
-                if df.iloc[i].isnull().values.any():
-                    self.lineasErroneas.append(i)
-        if df.dtypes[0]!='float64' or df.dtypes[1]!='float64' or df.dtypes[2]!='float64':
-            lineaDeError="ay datos que no son numéricos"
-            if errores==0:
-                self.listaArchivosConError.append(nombreArchivo)
-                errores==1
-            self.descripcionErrores+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
-        if len(df)!=self.largoLandmarks:
-                lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
+    def chequeoDatos(self,landmarks,scaneo):
+        dataframes=[landmarks,scaneo]
+        nombreArchivoLandmark=os.path.basename(landmarks)
+        nombreArchivoEscaneo=nombreArchivoLandmark.replace("landmark","")
+        for DF in dataframes:
+            lineasErroneas=[]
+            listaArchivosConError=[]
+            nombreArchivo=os.path.basename(DF)
+            df=pd.read_table(DF,skiprows=None,delim_whitespace=(True),names=["X","Y","Z"])
+            df=df.apply(lambda x: pd.to_numeric(x, errors='coerce'))
+            errores=0
+            descripcionErrores=""
+            if df.isnull().values.any():
+                errores=1
+                print("Hay datos del tipo null")
+                listaArchivosConError.append(nombreArchivo)
+                descripcionErrores+="Hay datos tipo null"
+                for i in range(len(df)):
+                    if df.iloc[i].isnull().values.any():
+                        lineasErroneas.append(i)
+            if not df.apply(lambda x: x.apply(np.isreal)).all().all():
+                print("hay tipos de datos NO numéricos")
+                #apendizo en la linea "lineasErroneas" el numero de linea si hay algún dato que no es numérico
+                print(df)
+                for i in range(len(df)):
+                    if not df.iloc[i].apply(np.isreal).all():
+                        lineasErroneas.append(i)
+                lineaDeError="ay datos que no son numéricos"
                 if errores==0:
-                    self.listaArchivosConError.append(nombreArchivo)
-                    errores==1
-                self.descripcionErrores+=" y h"+lineaDeError if errores==1 else "H"+lineaDeError
+                    listaArchivosConError.append(nombreArchivo)
+                    descripcionErrores="H"+lineaDeError
+                    errores+=1
+                else:
+                    descripcionErrores+=" y h"+lineaDeError
+                    errores+=1
+
+            if "landmark" in nombreArchivo:
+                if len(df)!=self.largoLandmarks:
+                        lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
+                        print("error en la cantidad de landmarks")
+                        if errores==0:
+                            listaArchivosConError.append(nombreArchivo)
+                            errores+=1
+                        descripcionErrores+=" y h"+lineaDeError if errores>0 else "H"+lineaDeError
+            if errores>0:
+                self.ui.pushButton_3.setEnabled(True)
+                print(descripcionErrores)
+                if "landmark" in nombreArchivo:
+                    self.dictErrores['landmarks'].append(nombreArchivo)
+                    if len(lineasErroneas)>0:
+                        self.dictErrores['filasLandmark'].append(lineasErroneas)
+                    self.dictDescripciones['landmarks']=descripcionErrores 
+                else:
+                    self.dictErrores['scaneo'].append(errores)
+                    if len(lineasErroneas)>0:
+                        self.ictErrores['filasScaneo'].append(lineasErroneas)
+                    self.dictDescripciones['scaneo']=descripcionErrores
+            else:
+                self.ui.pushButton_3.setEnabled(False)
+                print("No hay errores")
+            return self.dictErrores,self.dictDescripciones
 
     def cargarArchivos(self):
-        archivos, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
-        if len(archivos)>0:
+        self.archivos, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
+        if len(self.archivos)>0:
             self.listaArchivosConError=[]
             self.listaErrores=[]
-            for archivo in archivos:
-                self.direccionXYZ=os.path.dirname(archivos[0])
+            for archivo in self.archivos:
+                self.direccionXYZ=os.path.dirname(self.archivos[0])+'/'
                 self.nombreArchivo=os.path.basename(archivo)
                 if "landmark" in archivo:
                     self.archivoScaneo=self.nombreArchivo.replace("landmark","")
@@ -142,7 +182,8 @@ class MiVentana(QDialog):
                         self.listaArchivosConError.append(self.nombreArchivo)
                         self.listaErrores.append("No se encontró archivo de escaneo")
                     else:
-                        listaArchivosErroresDatos,listaErroresDatos=chequeoDatos(archivo,dirArchivoScaneo)
+                        dictErr,dictDesc=self.chequeoDatos(archivo,dirArchivoScaneo)
+                        print(dictErr,dictDesc)
                         self.ui.label_2.setText("Archivos cargados correctmente")
                         self.ui.label_2.setStyleSheet("color: green")
                         self.ui.pushButton_3.setEnabled(True)
