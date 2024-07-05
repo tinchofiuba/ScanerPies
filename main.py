@@ -163,7 +163,7 @@ class MiVentana(QDialog):
                     else:
                         erroresTotales,dictErr,dictDesc=self.chequeoDatos([archivo,dirArchivoScaneo],erroresTotales) 
                         if erroresTotales>0:
-                            self.ui.label_2.setText("Hay un errores en los datos. Limpiar datos antes de procesar")
+                            self.ui.label_2.setText("Limpiar datos antes de procesar!")
                             self.ui.pushButton_5.setEnabled(True)
                             self.ui.label_2.setStyleSheet("color: red")
                             self.ui.pushButton_3.setEnabled(False)
