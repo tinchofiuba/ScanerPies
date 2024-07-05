@@ -13,6 +13,8 @@ class MiVentana(QDialog):
         super(MiVentana, self).__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        self.diccionarioErrores={}
+        self.diccionariosDescripciones={}
         self.direccionDeGuardado = os.getcwd()
         self.cargarConfiguracionInicial()
         self.archivos = []
@@ -21,9 +23,6 @@ class MiVentana(QDialog):
         self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
         self.ui.pushButton_5.setEnabled(False)
         self.descripcionErrores=""
-        self.dictErrores={'landmarks':[],'scaneo':[],'filasLandmark':[],'filasScaneo':[],'nombreLandmark':[],'nombreScaneo':[]} #creo un dict que almacena los archivos erroneos y las filas  
-        self.dictDescripciones={'landmarks':[],'scaneo':[]}
-        # Conectar señales a métodos
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
             self.ui.pushButton.setEnabled(True)
         else:
@@ -101,11 +100,8 @@ class MiVentana(QDialog):
             texto+=lineaMensaje if i==0 else lineaMensaje
         return texto
     
-    def chequeoDatos(self,landmarks,scaneo):
-        dataframes=[landmarks,scaneo]
-        nombreArchivoLandmark=os.path.basename(landmarks)
-        nombreArchivoEscaneo=nombreArchivoLandmark.replace("landmark","")
-        for DF in dataframes:
+    def chequeoDatos(self,listaDf,erroresTotales):
+        for DF in listaDf:
             lineasErroneas=[]
             listaArchivosConError=[]
             nombreArchivo=os.path.basename(DF)
@@ -114,56 +110,40 @@ class MiVentana(QDialog):
             errores=0
             descripcionErrores=""
             if df.isnull().values.any():
-                errores=1
-                print("Hay datos del tipo null")
+                errores+=1
+                erroresTotales+=1
                 listaArchivosConError.append(nombreArchivo)
-                descripcionErrores+="Hay datos tipo null"
+                descripcionErrores+="Hay datos tipo NaN/null"
                 for i in range(len(df)):
                     if df.iloc[i].isnull().values.any():
                         lineasErroneas.append(i)
-            if not df.apply(lambda x: x.apply(np.isreal)).all().all():
-                print("hay tipos de datos NO numéricos")
-                #apendizo en la linea "lineasErroneas" el numero de linea si hay algún dato que no es numérico
-                print(df)
-                for i in range(len(df)):
-                    if not df.iloc[i].apply(np.isreal).all():
-                        lineasErroneas.append(i)
-                lineaDeError="ay datos que no son numéricos"
-                if errores==0:
-                    listaArchivosConError.append(nombreArchivo)
-                    descripcionErrores="H"+lineaDeError
-                    errores+=1
-                else:
-                    descripcionErrores+=" y h"+lineaDeError
-                    errores+=1
-
             if "landmark" in nombreArchivo:
                 if len(df)!=self.largoLandmarks:
                         lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
-                        print("error en la cantidad de landmarks")
                         if errores==0:
                             listaArchivosConError.append(nombreArchivo)
                             errores+=1
+                            erroresTotales+=1
                         descripcionErrores+=" y h"+lineaDeError if errores>0 else "H"+lineaDeError
             if errores>0:
-                self.ui.pushButton_3.setEnabled(True)
-                print(descripcionErrores)
                 if "landmark" in nombreArchivo:
                     self.dictErrores['landmarks'].append(nombreArchivo)
                     if len(lineasErroneas)>0:
                         self.dictErrores['filasLandmark'].append(lineasErroneas)
-                    self.dictDescripciones['landmarks']=descripcionErrores 
+                    self.dictDescripciones['landmarks'].append(descripcionErrores)
                 else:
-                    self.dictErrores['scaneo'].append(errores)
+                    self.dictErrores['scaneo'].append(nombreArchivo)
                     if len(lineasErroneas)>0:
                         self.ictErrores['filasScaneo'].append(lineasErroneas)
-                    self.dictDescripciones['scaneo']=descripcionErrores
+                    self.dictDescripciones['scaneo'].append(descripcionErrores)
             else:
-                self.ui.pushButton_3.setEnabled(False)
                 print("No hay errores")
-            return self.dictErrores,self.dictDescripciones
+            return erroresTotales,self.dictErrores,self.dictDescripciones
 
     def cargarArchivos(self):
+        erroresTotales=0
+        self.dictErrores={'landmarks':[],'scaneo':[],'filasLandmark':[],'filasScaneo':[]} #creo un dict que almacena los archivos erroneos y las filas  
+        self.dictDescripciones={'landmarks':[],'scaneo':[]}
         self.archivos, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
         if len(self.archivos)>0:
             self.listaArchivosConError=[]
@@ -174,7 +154,6 @@ class MiVentana(QDialog):
                 if "landmark" in archivo:
                     self.archivoScaneo=self.nombreArchivo.replace("landmark","")
                     dirArchivoScaneo=self.direccionXYZ+self.archivoScaneo
-                    print(dirArchivoScaneo)
                     if not os.path.exists(dirArchivoScaneo):
                         self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
                         self.ui.label_2.setStyleSheet("color: red")
@@ -182,11 +161,31 @@ class MiVentana(QDialog):
                         self.listaArchivosConError.append(self.nombreArchivo)
                         self.listaErrores.append("No se encontró archivo de escaneo")
                     else:
-                        dictErr,dictDesc=self.chequeoDatos(archivo,dirArchivoScaneo)
-                        print(dictErr,dictDesc)
-                        self.ui.label_2.setText("Archivos cargados correctmente")
-                        self.ui.label_2.setStyleSheet("color: green")
-                        self.ui.pushButton_3.setEnabled(True)
+                        erroresTotales,dictErr,dictDesc=self.chequeoDatos([archivo,dirArchivoScaneo],erroresTotales) 
+                        if erroresTotales>0:
+                            self.ui.label_2.setText("Hay un errores en los datos. Limpiar datos antes de procesar")
+                            self.ui.pushButton_5.setEnabled(True)
+                            self.ui.label_2.setStyleSheet("color: red")
+                            self.ui.pushButton_3.setEnabled(False)
+                            textoLandmarks=""
+                            textoEscaneo=""
+                            if len(dictErr['landmarks'])>0:
+                                erroresLandmarks=zip(dictErr['landmarks'],dictDesc['landmarks'])
+                                for errores in erroresLandmarks:
+                                    textoLandmarks+=errores[0]+": "+errores[1]+"\n"
+                            if len(dictErr['scaneo'])>0:
+                                erroresScaneo=zip(dictErr['scaneo'],dictDesc['scaneo'])
+                                for errores in erroresScaneo:
+                                    textoEscaneo+=errores[0]+": "+errores[1]+"\n"
+                            msg = QMessageBox(self)
+                            msg.setWindowTitle("Hay errores de datos!")
+                            msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
+                            msg.exec_()
+                        else:
+                            self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
+                            self.ui.label_2.setStyleSheet("color: green")
+                            self.ui.pushButton_5.setEnabled(False)
+                            self.ui.pushButton_3.setEnabled(True)
                 else:
                     self.ui.label_2.setText("Hay archivos mal cargados, repetir la carga")
                     self.ui.label_2.setStyleSheet("color: red")
