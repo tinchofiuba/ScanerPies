@@ -13,6 +13,10 @@ class MiVentana(QDialog):
         super(MiVentana, self).__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        self.setWindowTitle("Extracción de medidas - Scanner corporal")
+        #le cambio el icono a la ventana
+        self.setWindowIcon(QIcon('icono/iconoINTI.jpg'))
+        self.limpieza=0
         self.diccionarioErrores={}
         self.diccionariosDescripciones={}
         self.direccionDeGuardado = os.getcwd()
@@ -23,7 +27,7 @@ class MiVentana(QDialog):
         self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
         self.ui.pushButton_5.setEnabled(False)
         self.descripcionErrores=""
-        if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
+        if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='': #solo para la ocación.
             self.ui.pushButton.setEnabled(True)
         else:
             self.ui.pushButton.setEnabled(False)
@@ -37,15 +41,23 @@ class MiVentana(QDialog):
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
         self.ui.pushButton_5.clicked.connect(lambda: self.limpiarDatos())
 
-    def limpiarDatos(self):
-        print("limpiando datos")
+    def limpiarDatos(self,listaDf):
+        for df in listaDf:
+            df.dropna(inplace=True)
+            df.drop_duplicates(inplace=True)
+        return listaDf
                                              
     def chequeoBotones(self, tipo):
         if tipo=="combobox":
             self.cambiarOperador()
             if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
-                self.ui.pushButton_3.setEnabled(True)
+                self.ui.pushButton.setEnabled(True)
+                if self.limpieza==1:
+                    self.ui.pushButton_3.setEnabled(True)
+                else:
+                    self.ui.pushButton_3.setEnabled(False)
             else:
+                self.ui.pushButton.setEnabled(False)
                 self.ui.pushButton_3.setEnabled(False)
         elif tipo=="lineedit":
             self.guardarLugar()
@@ -134,11 +146,12 @@ class MiVentana(QDialog):
                 else:
                     self.dictErrores['scaneo'].append(nombreArchivo)
                     if len(lineasErroneas)>0:
-                        self.ictErrores['filasScaneo'].append(lineasErroneas)
+                        self.dictErrores['filasScaneo'].append(lineasErroneas)
                     self.dictDescripciones['scaneo'].append(descripcionErrores)
             else:
                 print("No hay errores")
-            return erroresTotales,self.dictErrores,self.dictDescripciones
+            print(erroresTotales,self.dictErrores,self.dictDescripciones)
+        return erroresTotales,self.dictErrores,self.dictDescripciones
 
     def cargarArchivos(self):
         erroresTotales=0
@@ -163,9 +176,6 @@ class MiVentana(QDialog):
                     else:
                         erroresTotales,dictErr,dictDesc=self.chequeoDatos([archivo,dirArchivoScaneo],erroresTotales) 
                         if erroresTotales>0:
-                            self.ui.label_2.setText("Limpiar datos antes de procesar!")
-                            self.ui.pushButton_5.setEnabled(True)
-                            self.ui.label_2.setStyleSheet("color: red")
                             self.ui.pushButton_3.setEnabled(False)
                             textoLandmarks=""
                             textoEscaneo=""
@@ -177,11 +187,6 @@ class MiVentana(QDialog):
                                 erroresScaneo=zip(dictErr['scaneo'],dictDesc['scaneo'])
                                 for errores in erroresScaneo:
                                     textoEscaneo+=errores[0]+": "+errores[1]+"\n"
-                            msg = QMessageBox(self)
-                            msg.setWindowTitle("Hay errores de datos!")
-                            msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
-                            msg.exec_()
-                        else:
                             self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
                             self.ui.label_2.setStyleSheet("color: green")
                             self.ui.pushButton_5.setEnabled(False)
@@ -192,21 +197,35 @@ class MiVentana(QDialog):
                     self.ui.pushButton_3.setEnabled(False)
                     self.listaArchivosConError.append(self.nombreArchivo)
                     self.listaErrores.append("No es un archivo landmark")
+            if erroresTotales>0:
+                msg = QMessageBox(self)
+                msg.setWindowTitle("Hay errores de datos!")
+                if len(textoLandmarks)==0:
+                    if len(textoEscaneo)!=0:
+                        self.ui.pushButton_5.setEnabled(True)
+                        self.limpieza=1
+                        msg.setWindowTitle("Es necesario limpiar datos")
+                    else:
+                        self.ui.pushButton_5.setEnabled(False)
+                    msg.setText("Errores en escaneo:\n"+textoEscaneo)
+                elif len(textoEscaneo)==0:
+                    self.ui.pushButton_5.setEnabled(False)
+                    msg.setText("Errores en landmarks:\n"+textoLandmarks)
+                else:
+                    msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
+                msg.exec_()
         else:
             self.ui.pushButton_3.setEnabled(False)
             self.ui.label_2.setText("No se cargaron archivos")
         if len(self.listaArchivosConError)>0:
-            print(self.listaArchivosConError)
             texto=self.muestraErrores(self.listaArchivosConError,self.listaErrores)
             msg = QMessageBox(self)
             msg.setWindowTitle("Error")
             msg.setText(texto)
             msg.exec_()
         
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     ventana = MiVentana()
     ventana.show()
     sys.exit(app.exec_())
-
