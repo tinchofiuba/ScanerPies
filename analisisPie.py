@@ -5,23 +5,24 @@ import plotly.express as px
 import plotly.graph_objects as go
 from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie,alturaTalon,largoAnchoEntrada
 import time
+from configIniciales import PerimetrosAMedir,listaCsv
 
 #defino variables a utilizar
-def analisis(df0,dfLandmarks):
+def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
+    xyz=["X","Y","Z"]
+    tag=df0.split('/')[-1].split('.')[0]
+    df0=np.round(pd.read_table(df0,skiprows=2,delim_whitespace=(True),names=xyz),1)
+    dfLandmarks=np.round(pd.read_table(dfLandmarks,delim_whitespace=(True),names=xyz),1)
     lZmin=[]
     lYmin=[]
     MedidasPerim=[] 
-    xyz=["X","Y","Z"]
-    datosPersonales=['TAG','USUARIO','FECHA','LUGAR','OBSERVACIONES']
-    PerimetrosAMedir=['PERIM ENTRADA','PERIM EMPEINE','PERIM METATARSO','PERIM TALON-ENTRADA','PERIM INICIO TALON-ENTRADA','PERIM TALON-EMPEINE','PERIM INICIO TALON-EMPEINE']
-    MedidasAbsolutas=['LARGO','ANCHO TOTAL','ALTURA ENTRADA','ALTURA EMPEINE','ALTURA TALON','ALTURA ARCO']
-    MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MAX METATARSO','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
-    Anomalias=['ANOMALIAS','APERTURA']
-    listaCsv=datosPersonales+PerimetrosAMedir+MedidasAbsolutas+MedidasCalculadas+Anomalias
 
+#aca me falta integrar la verificacion de si existe o no el .CSV
     dfMedicion=pd.DataFrame(columns=listaCsv)
     #guardo la fecha y hora de la medicion
     dfMedicion.at[0,'FECHA']=time.strftime("%d/%m/%Y %H:%M:%S")
+    dfMedicion.at[0,'USUARIO']=operador
+    dfMedicion.at[0,'LUGAR']=lugar
     tamañoDato=8
     tamañoLandmark=8
     indice=0
@@ -43,7 +44,7 @@ def analisis(df0,dfLandmarks):
     minz=df['Z'].min()
     maxz=df['Z'].max()
     #------------------------------------------------------------------------------
-    dfMedicion.at[0,'TAG']="tag"
+    dfMedicion.at[0,'TAG']=tag
     #---------------------MEDICIONES----------------------------------------------
     #ENCUENTRO:
     #1-EL TIPO DE PIE
@@ -149,9 +150,9 @@ def analisis(df0,dfLandmarks):
     except:
         dfMedicion.to_csv('Mediciones.csv',index=False)
 
-    fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-    fig.show()
+    #fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+    #fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+    #fig.show()
 
 #solo ejecuto esto cuando corro este script, sino no
 if __name__ == "__main__":
@@ -160,5 +161,5 @@ if __name__ == "__main__":
     xyz=["X","Y","Z"]
     df0=np.round(pd.read_table(escaneo,skiprows=2,delim_whitespace=(True),names=xyz),1)
     dfLandmarks=np.round(pd.read_table(Landmarks,delim_whitespace=(True),names=xyz),1)
-    analisis(df0,dfLandmarks)
+    extraccion(df0,dfLandmarks)
 

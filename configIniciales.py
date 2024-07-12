@@ -14,3 +14,10 @@ notaInicial='''
           pudiendose abrir con excel.
           -En caso de cargar 2 veces el mismo "landmarkNombreNumero.xyz el programa
           mostrará en el archivo csv el TAG con un ".dup" al final.'''
+
+datosPersonales=['TAG','USUARIO','FECHA','LUGAR','OBSERVACIONES']
+PerimetrosAMedir=['PERIM ENTRADA','PERIM EMPEINE','PERIM METATARSO','PERIM TALON-ENTRADA','PERIM INICIO TALON-ENTRADA','PERIM TALON-EMPEINE','PERIM INICIO TALON-EMPEINE']
+MedidasAbsolutas=['LARGO','ANCHO TOTAL','ALTURA ENTRADA','ALTURA EMPEINE','ALTURA TALON','ALTURA ARCO']
+MedidasCalculadas=['LARGO TALON-ENTRADA','LARGO TALON-EMPEINE','LARGO INICIO TALON-ENTRADA','LARGO INICIO TALON-EMPEINE','ANCHO METATARSICO','ALTURA PUNTA DE PIE','ALTURA MAX METATARSO','ALTURA MITAD DEL PIE','PIE IZQ/DER','TIPO DE PIE']
+Anomalias=['ANOMALIAS','APERTURA']
+listaCsv=datosPersonales+PerimetrosAMedir+MedidasAbsolutas+MedidasCalculadas+Anomalias

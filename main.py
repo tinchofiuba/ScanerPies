@@ -6,8 +6,9 @@ from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, Q
 from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
-from analisisPie import analisis
-from procedimiento import notaInicial
+from analisisPie import extraccion
+from configIniciales import notaInicial
+from multiprocessing import Process
 
 class MiVentana(QDialog):
     def __init__(self, parent=None):
@@ -22,9 +23,10 @@ class MiVentana(QDialog):
         self.diccionariosDescripciones={}
         self.direccionDeGuardado = os.getcwd()
         self.cargarConfiguracionInicial()
-        self.archivos = []
+        self.archivosLandmarks = []
         self.listaArchivosConError=[]
         self.listaErrores=[]
+        self.listaProcesos=[]
         self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
         self.descripcionErrores=""
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='': #solo para la ocación.
@@ -37,6 +39,8 @@ class MiVentana(QDialog):
         self.ui.lineEdit.textChanged.connect(lambda: self.chequeoBotones("lineedit")) #si cambia el lineedit
         self.ui.pushButton_4.clicked.connect(lambda: self.infoUsuario())
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
+        self.ui.pushButton_3.clicked.connect(lambda: self.analisis())
+                                             
         #coloco la imagen con nombre "INTI.jpg" en wl Qlabel
         self.label_Imagen = QLabel(self)
         self.label_Imagen.setGeometry(10, 160, 130, 130)
@@ -48,8 +52,33 @@ class MiVentana(QDialog):
         df.dropna(inplace=True)
         df.drop_duplicates(inplace=True)
 
-    def extraccionMedidas(self,dfLandmark,dfScaneo):
-                                             
+    def analisis(self):
+        numCores=os.cpu_count()
+        operador=self.ui.comboBox.currentText()
+        lugar=self.ui.lineEdit.text()
+        if len(self.archivosLandmarks)<=numCores:
+            for i in range(len(self.archivosLandmarks)):
+                p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i],operador,lugar,1))
+                p.start()   
+                self.listaProcesos.append(p)
+            for proceso in self.listaProcesos:
+                proceso.join()
+        else:
+            numCiclos=len(self.archivosLandmarks)//numCores
+            archivosResiduales=len(self.archivosLandmarks)%numCores
+            for ciclo in range(numCiclos):
+                if ciclo==numCiclos-1:
+                    lenArchivos=archivosResiduales
+                else:
+                    lenArchivos=numCores
+                for i in range(lenArchivos):
+                    p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i+ciclo*lenArchivos],self.archivosLandmarks[i+ciclo*lenArchivos],operador,lugar,1))
+                    p.start()   
+                    self.ListaProcesos.append(p)
+                for proceso in self.ListaProcesos:
+                    proceso.join()
+                self.listaProcesos.clear()
+
     def chequeoBotones(self, tipo):
         if tipo=="combobox":
             self.cambiarOperador()
@@ -94,6 +123,10 @@ class MiVentana(QDialog):
         global direccionDeGuardado
         direccionDeGuardado = QFileDialog.getExistingDirectory()
         self.ui.label_3.setText(direccionDeGuardado)
+        with open('back.json') as f:
+            data = json.load(f)
+        data['direccionCsv']=direccionDeGuardado
+
 
     def cambiarOperador(self):
         with open('back.json') as f:
@@ -165,16 +198,18 @@ class MiVentana(QDialog):
         erroresTotales=0
         self.dictErrores={'landmarks':[],'scaneo':[],'filasLandmark':[],'filasScaneo':[]} #creo un dict que almacena los archivos erroneos y las filas  
         self.dictDescripciones={'landmarks':[],'scaneo':[]}
-        self.archivos, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
-        if len(self.archivos)>0:
+        self.archivosLandmarks, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
+        self.listaArchivosParaEscanear=[]
+        if len(self.archivosLandmarks)>0:
             self.listaArchivosConError=[]
             self.listaErrores=[]
-            for archivo in self.archivos:
-                self.direccionXYZ=os.path.dirname(self.archivos[0])+'/'
+            for archivo in self.archivosLandmarks:
+                self.direccionXYZ=os.path.dirname(self.archivosLandmarks[0])+'/'
                 self.nombreArchivo=os.path.basename(archivo)
                 if "landmark" in archivo:
                     self.archivoScaneo=self.nombreArchivo.replace("landmark","")
                     dirArchivoScaneo=self.direccionXYZ+self.archivoScaneo
+                    self.listaArchivosParaEscanear.append(dirArchivoScaneo)
                     if not os.path.exists(dirArchivoScaneo):
                         self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
                         self.ui.label_2.setStyleSheet("color: red")
@@ -228,6 +263,7 @@ class MiVentana(QDialog):
             msg.setWindowTitle("Error")
             msg.setText(texto)
             msg.exec_()
+        
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
