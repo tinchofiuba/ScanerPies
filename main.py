@@ -2,7 +2,8 @@ import sys
 import os
 import json
 import pandas as pd
-from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
+from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, QLabel
+from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
 from analisisPie import analisis
@@ -15,7 +16,7 @@ class MiVentana(QDialog):
         self.ui.setupUi(self)
         self.setWindowTitle("Extracción de medidas - Scanner corporal")
         #le cambio el icono a la ventana
-        self.setWindowIcon(QIcon('icono/iconoINTI.jpg'))
+        self.setWindowIcon(QIcon('icono/3D.jpg'))
         self.limpieza=0
         self.diccionarioErrores={}
         self.diccionariosDescripciones={}
@@ -25,7 +26,6 @@ class MiVentana(QDialog):
         self.listaArchivosConError=[]
         self.listaErrores=[]
         self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
-        self.ui.pushButton_5.setEnabled(False)
         self.descripcionErrores=""
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='': #solo para la ocación.
             self.ui.pushButton.setEnabled(True)
@@ -35,17 +35,20 @@ class MiVentana(QDialog):
         self.ui.pushButton_2.clicked.connect(lambda: self.cambiarDireccionCsv())
         self.ui.comboBox.currentIndexChanged.connect(lambda: self.chequeoBotones("combobox")) #si cambia el combobox
         self.ui.lineEdit.textChanged.connect(lambda: self.chequeoBotones("lineedit")) #si cambia el lineedit
-        #en caso de que sucedan estas 2 coasa se habilitará el boton para predecir las medias del pie   
         self.ui.pushButton_4.clicked.connect(lambda: self.infoUsuario())
-        #self.ui.pushButton_3.clicked.connect(lambda: self.comenzarAnalisis())
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
-        self.ui.pushButton_5.clicked.connect(lambda: self.limpiarDatos())
+        #coloco la imagen con nombre "INTI.jpg" en wl Qlabel
+        self.label_Imagen = QLabel(self)
+        self.label_Imagen.setGeometry(10, 160, 130, 130)
+        pixmap = QPixmap("icono/INTI.jpg")
+        self.label_Imagen.setPixmap(pixmap)
+        self.label_Imagen.setScaledContents(True)
 
-    def limpiarDatos(self,listaDf):
-        for df in listaDf:
-            df.dropna(inplace=True)
-            df.drop_duplicates(inplace=True)
-        return listaDf
+    def limpiarDatos(self,df): #limpio los datos, saco valores duplicados y NaN
+        df.dropna(inplace=True)
+        df.drop_duplicates(inplace=True)
+
+    def extraccionMedidas(self,dfLandmark,dfScaneo):
                                              
     def chequeoBotones(self, tipo):
         if tipo=="combobox":
@@ -122,13 +125,18 @@ class MiVentana(QDialog):
             errores=0
             descripcionErrores=""
             if df.isnull().values.any():
-                errores+=1
-                erroresTotales+=1
-                listaArchivosConError.append(nombreArchivo)
-                descripcionErrores+="Hay datos tipo NaN/null"
-                for i in range(len(df)):
-                    if df.iloc[i].isnull().values.any():
-                        lineasErroneas.append(i)
+                if "landmark" in nombreArchivo:
+                    errores+=1
+                    erroresTotales+=1
+                    listaArchivosConError.append(nombreArchivo)
+                    descripcionErrores+="Hay datos tipo NaN/null"
+                    for i in range(len(df)):
+                        if df.iloc[i].isnull().values.any():
+                            lineasErroneas.append(i)
+                else:
+                    print(len(df))
+                    self.limpiarDatos(df)
+                    print(len(df))
             if "landmark" in nombreArchivo:
                 if len(df)!=self.largoLandmarks:
                         lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
@@ -187,10 +195,6 @@ class MiVentana(QDialog):
                                 erroresScaneo=zip(dictErr['scaneo'],dictDesc['scaneo'])
                                 for errores in erroresScaneo:
                                     textoEscaneo+=errores[0]+": "+errores[1]+"\n"
-                            self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
-                            self.ui.label_2.setStyleSheet("color: green")
-                            self.ui.pushButton_5.setEnabled(False)
-                            self.ui.pushButton_3.setEnabled(True)
                 else:
                     self.ui.label_2.setText("Hay archivos mal cargados, repetir la carga")
                     self.ui.label_2.setStyleSheet("color: red")
@@ -202,18 +206,19 @@ class MiVentana(QDialog):
                 msg.setWindowTitle("Hay errores de datos!")
                 if len(textoLandmarks)==0:
                     if len(textoEscaneo)!=0:
-                        self.ui.pushButton_5.setEnabled(True)
-                        self.limpieza=1
-                        msg.setWindowTitle("Es necesario limpiar datos")
-                    else:
-                        self.ui.pushButton_5.setEnabled(False)
-                    msg.setText("Errores en escaneo:\n"+textoEscaneo)
+                        self.ui.label_2.setText("Se corrigieron errores")
+                        self.ui.label_2.setStyleSheet("color: green")
                 elif len(textoEscaneo)==0:
-                    self.ui.pushButton_5.setEnabled(False)
+                    self.ui.label_2.setText("Hay errores en landmarks")
+                    self.ui.label_2.setStyleSheet("color: red")
                     msg.setText("Errores en landmarks:\n"+textoLandmarks)
                 else:
                     msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
                 msg.exec_()
+            else:
+                self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
+                self.ui.label_2.setStyleSheet("color: green")
+                self.ui.pushButton_3.setEnabled(True)
         else:
             self.ui.pushButton_3.setEnabled(False)
             self.ui.label_2.setText("No se cargaron archivos")

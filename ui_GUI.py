@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'GUISvUDXC.ui'
+## Form generated from reading UI file 'GUIBwjDpq.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -43,25 +43,16 @@ class Ui_Dialog(object):
         self.label_2.setGeometry(QRect(130, 50, 261, 31))
         self.pushButton_3 = QPushButton(Dialog)
         self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(10, 160, 151, 31))
+        self.pushButton_3.setGeometry(QRect(150, 90, 151, 31))
         self.label_3 = QLabel(Dialog)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setGeometry(QRect(10, 130, 311, 21))
-        self.label_4 = QLabel(Dialog)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setGeometry(QRect(20, 200, 161, 21))
-        self.textEdit = QTextEdit(Dialog)
-        self.textEdit.setObjectName(u"textEdit")
-        self.textEdit.setGeometry(QRect(190, 190, 201, 101))
-        self.label_5 = QLabel(Dialog)
-        self.label_5.setObjectName(u"label_5")
-        self.label_5.setGeometry(QRect(250, 160, 91, 21))
         self.pushButton_4 = QPushButton(Dialog)
         self.pushButton_4.setObjectName(u"pushButton_4")
         self.pushButton_4.setGeometry(QRect(330, 10, 61, 31))
-        self.pushButton_5 = QPushButton(Dialog)
-        self.pushButton_5.setObjectName(u"pushButton_5")
-        self.pushButton_5.setGeometry(QRect(140, 90, 121, 31))
+        self.label_Imagen = QLabel(Dialog)
+        self.label_Imagen.setObjectName(u"label_Imagen")
+        self.label_Imagen.setGeometry(QRect(10, 160, 141, 131))
 
         self.retranslateUi(Dialog)
 
@@ -82,9 +73,7 @@ class Ui_Dialog(object):
         self.label_2.setText(QCoreApplication.translate("Dialog", u"No se cargaron archivos", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"Analizar y extraer medidas", None))
         self.label_3.setText(QCoreApplication.translate("Dialog", u"default: Escritorio", None))
-        self.label_4.setText(QCoreApplication.translate("Dialog", u"ERRORES: 0", None))
-        self.label_5.setText(QCoreApplication.translate("Dialog", u"OBSERVACIONES", None))
         self.pushButton_4.setText(QCoreApplication.translate("Dialog", u"INFO", None))
-        self.pushButton_5.setText(QCoreApplication.translate("Dialog", u"Limpiar datos ", None))
+        self.label_Imagen.setText(QCoreApplication.translate("Dialog", u"INTI", None))
     # retranslateUi
 
