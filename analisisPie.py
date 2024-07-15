@@ -9,24 +9,22 @@ from configIniciales import PerimetrosAMedir,listaCsv
 
 #defino variables a utilizar
 def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
+    tamañoDato=8
+    tamañoLandmark=8
+    lZmin=[]
+    lYmin=[]
+    MedidasPerim=[] 
     xyz=["X","Y","Z"]
     tag=df0.split('/')[-1].split('.')[0]
     df0=np.round(pd.read_table(df0,skiprows=2,delim_whitespace=(True),names=xyz),1)
     dfLandmarks=np.round(pd.read_table(dfLandmarks,delim_whitespace=(True),names=xyz),1)
-    lZmin=[]
-    lYmin=[]
-    MedidasPerim=[] 
 
-#aca me falta integrar la verificacion de si existe o no el .CSV
     dfMedicion=pd.DataFrame(columns=listaCsv)
     #guardo la fecha y hora de la medicion
     dfMedicion.at[0,'FECHA']=time.strftime("%d/%m/%Y %H:%M:%S")
     dfMedicion.at[0,'USUARIO']=operador
     dfMedicion.at[0,'LUGAR']=lugar
-    tamañoDato=8
-    tamañoLandmark=8
-    indice=0
-    
+    dfMedicion.at[0,'TAG']=tag
     df=df0.copy()
     for v in xyz: #me fijo si hay valores negativos, si es así llevo todos los valores a positivos
         minv=df[v].min()   
@@ -43,8 +41,6 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     maxy=df['Y'].max()
     minz=df['Z'].min()
     maxz=df['Z'].max()
-    #------------------------------------------------------------------------------
-    dfMedicion.at[0,'TAG']=tag
     #---------------------MEDICIONES----------------------------------------------
     #ENCUENTRO:
     #1-EL TIPO DE PIE
@@ -76,7 +72,6 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     #2-EL ANCHO TOTAL DEL PIE
     #3-LA ALTURA DE LA ENTRADA DEL PIE
     arrayEntradaPie,dfEntradaPie,dfMedicion=largoAnchoEntrada(df,dfLandmarks,maxy,miny,maxx,minx,xyz,dfMedicion)
-
     #------------------------------------------------------------------------------
     arrayCentroTobillo=dfLandmarks.iloc[12]
     distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón
@@ -150,9 +145,13 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     except:
         dfMedicion.to_csv('Mediciones.csv',index=False)
 
-    #fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-    #fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-    #fig.show()
+    fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+    fig.show()
+    #grafico el dfFinal con otro graficador que no sea plotly
+    fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
+    fig.show()
+
 
 #solo ejecuto esto cuando corro este script, sino no
 if __name__ == "__main__":

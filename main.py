@@ -15,19 +15,18 @@ class MiVentana(QDialog):
         super(MiVentana, self).__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle("Extracción de medidas - Scanner corporal")
-        #le cambio el icono a la ventana
-        self.setWindowIcon(QIcon('icono/3D.jpg'))
+        self.setWindowTitle("Extracción de medidas - Scanner corporal") #titulo de la ventana
+        self.setWindowIcon(QIcon('icono/3D.jpg')) #le cambio el icono a la ventana
         self.limpieza=0
         self.diccionarioErrores={}
         self.diccionariosDescripciones={}
         self.direccionDeGuardado = os.getcwd()
-        self.cargarConfiguracionInicial()
         self.archivosLandmarks = []
         self.listaArchivosConError=[]
         self.listaErrores=[]
         self.listaProcesos=[]
-        self.largoLandmarks=22 #ver bien cuantas dimensiones tiene
+        self.cargarConfiguracionInicial()
+        self.largoLandmarks=22 
         self.descripcionErrores=""
         if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='': #solo para la ocación.
             self.ui.pushButton.setEnabled(True)
@@ -118,15 +117,14 @@ class MiVentana(QDialog):
             if data.get('lugar'):
                 self.ui.lineEdit.setText(data['lugar'])
 
-    #si apreto el boton pushButton_2 quiero se abre una ventana para seleccionar la dirección de guardado
     def cambiarDireccionCsv(self):
-        global direccionDeGuardado
         direccionDeGuardado = QFileDialog.getExistingDirectory()
         self.ui.label_3.setText(direccionDeGuardado)
         with open('back.json') as f:
             data = json.load(f)
-        data['direccionCsv']=direccionDeGuardado
-
+        data['direccionCsv'] = direccionDeGuardado
+        with open('back.json', 'w') as f:
+            json.dump(data, f)
 
     def cambiarOperador(self):
         with open('back.json') as f:
@@ -195,10 +193,19 @@ class MiVentana(QDialog):
         return erroresTotales,self.dictErrores,self.dictDescripciones
 
     def cargarArchivos(self):
+        #abro la carpeta mediante la dirección que se encuentra en el back.json
+        with open('back.json') as f:
+            data = json.load(f)
+        self.ultimaDireccionArchivos=data['direccionArchivos']
         erroresTotales=0
         self.dictErrores={'landmarks':[],'scaneo':[],'filasLandmark':[],'filasScaneo':[]} #creo un dict que almacena los archivos erroneos y las filas  
         self.dictDescripciones={'landmarks':[],'scaneo':[]}
-        self.archivosLandmarks, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks", "", "Archivos xyz (*.xyz);;Todos los archivos (*)")
+        self.archivosLandmarks, _ = QFileDialog.getOpenFileNames(self, "Seleccionar los archivos landmarks",self.ultimaDireccionArchivos,"Archivos xyz (*.xyz);;Todos los archivos (*)")
+        self.direccionArchivos=os.path.dirname(self.archivosLandmarks[0])
+        if data['direccionArchivos']!=self.direccionArchivos:
+            data['direccionArchivos']=self.direccionArchivos
+            with open('back.json', 'w') as f:
+                json.dump(data, f)
         self.listaArchivosParaEscanear=[]
         if len(self.archivosLandmarks)>0:
             self.listaArchivosConError=[]
@@ -263,7 +270,6 @@ class MiVentana(QDialog):
             msg.setWindowTitle("Error")
             msg.setText(texto)
             msg.exec_()
-        
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
