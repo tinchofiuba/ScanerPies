@@ -24,7 +24,6 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     dfMedicion.at[0,'FECHA']=time.strftime("%d/%m/%Y %H:%M:%S")
     dfMedicion.at[0,'USUARIO']=operador
     dfMedicion.at[0,'LUGAR']=lugar
-    dfMedicion.at[0,'TAG']=tag
     df=df0.copy()
     for v in xyz: #me fijo si hay valores negativos, si es así llevo todos los valores a positivos
         minv=df[v].min()   
@@ -134,15 +133,23 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
 
     for i in range(len(MedidasPerim)):
         dfMedicion.at[0,PerimetrosAMedir[i]]=MedidasPerim[i]
-    #si ya existe el archivo lo abro y le agrego la nueva medicion, si no existe locreo y vuelco la info que hay en dfMedicion
-    try:
+    try: #si el .csv existe lo abro y le agrego la medicion, sino lo creo
         dfViejo=pd.read_csv('Mediciones.csv')
-        #me fijo si el TAG ya existe en el archivo, si es así le agrego al tag el string ".duplicado"
-        if dfViejo['TAG'].str.contains(dfMedicion.at[0,'TAG']).any():
-            dfMedicion.at[0,'TAG']=dfMedicion.at[0,'TAG']+".duplicado"
+        print(tag)
+        if tag in dfViejo['TAG'].values:
+            valores=dfViejo['TAG'].values
+            tags=np.unique([tagDuplicado for tagDuplicado in valores if tag in tagDuplicado])
+            lenTags=[len(tag) for tag in tags]
+            if len(tags)>1:
+                tagMasLargo=tags[np.argmax(lenTags)]
+                tag=tagMasLargo+".duplicado"
+            else:
+                tag=tag+".duplicado"
+        dfMedicion.at[0,'TAG']=tag
         dfMedicion=pd.concat([dfViejo,dfMedicion],ignore_index=True)
         dfMedicion.to_csv('Mediciones.csv',index=False)
     except:
+        dfMedicion.at[0,'TAG']=tag
         dfMedicion.to_csv('Mediciones.csv',index=False)
 
     fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
