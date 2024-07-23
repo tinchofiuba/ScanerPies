@@ -257,7 +257,6 @@ class MiVentana(QDialog):
                     msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
                     self.ui.label_2.setText("Hay errores en ambos archivos")
                     self.ui.label_2.setStyleSheet("color: red")
-
                 msg.exec_()
             elif erroresTotales==-1:
                 self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
@@ -277,7 +276,6 @@ class MiVentana(QDialog):
             msg.setWindowTitle("Error")
             msg.setText(texto)
             msg.exec_()
-        
 
 def main():
     app = QApplication(sys.argv)
