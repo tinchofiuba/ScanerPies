@@ -8,8 +8,8 @@ import time
 from configIniciales import PerimetrosAMedir,listaCsv
 
 #defino variables a utilizar
-def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
-    print("emepzando")
+def extraccion(df0,dfLandmarks,operador,lugar,mostrarPlot,guardarPlot):
+    print("Empezando análisis")
     tamañoDato=8
     tamañoLandmark=8
     lZmin=[]
@@ -130,7 +130,6 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     dfCircInTalonEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
     dfCircTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
     dfCircInTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
-    dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
 
     for i in range(len(MedidasPerim)):
         dfMedicion.at[0,PerimetrosAMedir[i]]=MedidasPerim[i]
@@ -152,14 +151,18 @@ def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
     except:
         dfMedicion.at[0,'TAG']=tag
         dfMedicion.to_csv('Mediciones.csv',index=False)
-
-    fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
-    fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
-    fig.show()
-    #grafico el dfFinal con otro graficador que no sea plotly
-    fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
-    fig.show()
-
+    if mostrarPlot==True:
+        #dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+        fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+        fig.show()
+        
+        if guardarPlot==True:
+            #grafico el dfFinal con otro graficador que no sea plotly
+            fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
+            fig.write_html("grafico.html")
+            
 
 #solo ejecuto esto cuando corro este script, sino no
 if __name__ == "__main__":

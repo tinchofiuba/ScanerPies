@@ -10,6 +10,9 @@ from analisisPie import extraccion
 from configIniciales import notaInicial
 from multiprocessing import Process, freeze_support
 
+
+11111 Me falta direccionar las funciones de guardar plot y de mostrar plot!!!
+
 class MiVentana(QDialog):
     def __init__(self, parent=None):
         super(MiVentana, self).__init__(parent)
@@ -39,7 +42,8 @@ class MiVentana(QDialog):
         self.ui.pushButton_4.clicked.connect(lambda: self.infoUsuario())
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
         self.ui.pushButton_3.clicked.connect(lambda: self.analisis())
-                                             
+        self.ui.checkBox.stateChanged.connect(lambda: self.chequeoBotones("checkbox"))
+                             
         #coloco la imagen con nombre "INTI.jpg" en wl Qlabel
         self.label_Imagen = QLabel(self)
         self.label_Imagen.setGeometry(10, 160, 130, 130)
@@ -86,17 +90,37 @@ class MiVentana(QDialog):
                 self.ui.pushButton.setEnabled(True)
                 if self.limpieza==1:
                     self.ui.pushButton_3.setEnabled(True)
+                    self.ui.checkBox.setEnabled(True)
+                    if self.ui.checkBox.isChecked():
+                        self.ui.checkBox_2.setEnabled(True)
+                        self.ui.checkBox_3.setEnabled(True)
+                    else:
+                        self.ui.checkBox_2.setEnabled(False)
+                        self.ui.checkBox_3.setEnabled(False)
                 else:
                     self.ui.pushButton_3.setEnabled(False)
+                    self.ui.checkBox.setEnabled(False)
+                    self.ui.checkBox_2.setEnabled(False)
+                    self.ui.checkBox_3.setEnabled(False)
             else:
                 self.ui.pushButton.setEnabled(False)
                 self.ui.pushButton_3.setEnabled(False)
+                self.ui.checkBox.setEnabled(False)
+                self.ui.checkBox_2.setEnabled(False)
+                self.ui.checkBox_3.setEnabled(False)
         elif tipo=="lineedit":
             self.guardarLugar()
             if self.ui.comboBox.currentText()!= 'Operador/a' and self.ui.lineEdit.text()!='':
                 self.ui.pushButton.setEnabled(True)
             else:
                 self.ui.pushButton.setEnabled(False)
+        elif tipo=="checkbox":
+            if self.ui.checkBox.isChecked():
+                self.ui.checkBox_2.setEnabled(True)
+                self.ui.checkBox_3.setEnabled(True)
+            else:
+                self.ui.checkBox_2.setEnabled(False)
+                self.ui.checkBox_3.setEnabled(False)
 
     def guardarLugar(self):
         with open('back.json') as f:
@@ -117,6 +141,22 @@ class MiVentana(QDialog):
                 self.ui.comboBox.setCurrentText(data['operador'])
             if data.get('lugar'):
                 self.ui.lineEdit.setText(data['lugar'])
+            self.ui.checkBox.setEnabled(False)
+            self.ui.checkBox_2.setEnabled(False)
+            self.ui.checkBox_3.setEnabled(False)
+            with open('back.json') as f:
+                data = json.load(f)
+                if "BotonPag1" in data:  # Verifica si 'BotonPag1' existe en el diccionario
+                    if data["BotonPag1"]["tag"] == "":
+                        self.ui.pushButton_5.setText(data["BotonPag1"]["tagDefault"])
+                    else:
+                        self.ui.pushButton_5.setText(data["BotonPag1"]["tag"])
+                if "BotonPag2" in data:  # Verifica si 'BotonPag1' existe en el diccionario
+                    if data["BotonPag2"]["tag"] == "":
+                        self.ui.pushButton_6.setText(data["BotonPag2"]["tagDefault"])
+                    else:
+                        self.ui.pushButton_6.setText(data["BotonPag2"]["tag"])
+
 
     def cambiarDireccionCsv(self):
         direccionDeGuardado = QFileDialog.getExistingDirectory()
@@ -226,6 +266,9 @@ class MiVentana(QDialog):
                         erroresTotales,dictErr,dictDesc=self.chequeoDatos([archivo,dirArchivoScaneo],erroresTotales) 
                         if erroresTotales>0:
                             self.ui.pushButton_3.setEnabled(False)
+                            self.ui.checkBox.setEnabled(False)
+                            self.ui.checkBox_2.setEnabled(False)
+                            self.ui.checkBox_3.setEnabled(False)
                             textoLandmarks=""
                             textoEscaneo=""
                             if len(dictErr['landmarks'])>0:
@@ -240,6 +283,9 @@ class MiVentana(QDialog):
                     self.ui.label_2.setText("Hay archivos mal cargados, repetir la carga")
                     self.ui.label_2.setStyleSheet("color: red")
                     self.ui.pushButton_3.setEnabled(False)
+                    self.ui.checkBox.setEnabled(False)
+                    self.ui.checkBox_2.setEnabled(False)
+                    self.ui.checkBox_3.setEnabled(False)
                     self.listaArchivosConError.append(self.nombreArchivo)
                     self.listaErrores.append("No es un archivo landmark")
             if erroresTotales>0:
@@ -262,11 +308,22 @@ class MiVentana(QDialog):
                 self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
                 self.ui.label_2.setStyleSheet("color: red")
                 self.ui.pushButton_3.setEnabled(False)
+                self.ui.checkBox.setEnabled(False)
+                self.ui.checkBox_2.setEnabled(False)
+                self.ui.checkBox_3.setEnabled(False)
 
             else:
                 self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
                 self.ui.label_2.setStyleSheet("color: green")
                 self.ui.pushButton_3.setEnabled(True)
+                self.ui.checkBox.setEnabled(True)
+                if self.ui.checkBox.isChecked():
+                    self.ui.checkBox_2.setEnabled(True)
+                    self.ui.checkBox_3.setEnabled(True)
+                else:
+                    self.ui.checkBox_2.setEnabled(False)
+                    self.ui.checkBox_3.setEnabled(False)
+
         else:
             self.ui.pushButton_3.setEnabled(False)
             self.ui.label_2.setText("No se cargaron archivos")

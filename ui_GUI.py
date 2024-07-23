@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'GUIBwjDpq.ui'
+## Form generated from reading UI file 'GUIBJspVR.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
 
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(400, 300)
+        Dialog.resize(399, 300)
         self.comboBox = QComboBox(Dialog)
         self.comboBox.addItem("")
         self.comboBox.addItem("")
@@ -53,6 +53,21 @@ class Ui_Dialog(object):
         self.label_Imagen = QLabel(Dialog)
         self.label_Imagen.setObjectName(u"label_Imagen")
         self.label_Imagen.setGeometry(QRect(10, 160, 141, 131))
+        self.checkBox = QCheckBox(Dialog)
+        self.checkBox.setObjectName(u"checkBox")
+        self.checkBox.setGeometry(QRect(180, 160, 111, 21))
+        self.checkBox_2 = QCheckBox(Dialog)
+        self.checkBox_2.setObjectName(u"checkBox_2")
+        self.checkBox_2.setGeometry(QRect(180, 190, 151, 21))
+        self.checkBox_3 = QCheckBox(Dialog)
+        self.checkBox_3.setObjectName(u"checkBox_3")
+        self.checkBox_3.setGeometry(QRect(180, 220, 151, 21))
+        self.pushButton_5 = QPushButton(Dialog)
+        self.pushButton_5.setObjectName(u"pushButton_5")
+        self.pushButton_5.setGeometry(QRect(310, 160, 81, 41))
+        self.pushButton_6 = QPushButton(Dialog)
+        self.pushButton_6.setObjectName(u"pushButton_6")
+        self.pushButton_6.setGeometry(QRect(310, 210, 81, 41))
 
         self.retranslateUi(Dialog)
 
@@ -75,5 +90,10 @@ class Ui_Dialog(object):
         self.label_3.setText(QCoreApplication.translate("Dialog", u"default: Escritorio", None))
         self.pushButton_4.setText(QCoreApplication.translate("Dialog", u"INFO", None))
         self.label_Imagen.setText(QCoreApplication.translate("Dialog", u"INTI", None))
+        self.checkBox.setText(QCoreApplication.translate("Dialog", u"Graficar resultados", None))
+        self.checkBox_2.setText(QCoreApplication.translate("Dialog", u"Guardar grafico (.html)", None))
+        self.checkBox_3.setText(QCoreApplication.translate("Dialog", u"Incluir landmarks", None))
+        self.pushButton_5.setText(QCoreApplication.translate("Dialog", u"P\u00e1gina EAAr", None))
+        self.pushButton_6.setText(QCoreApplication.translate("Dialog", u"P\u00e1gina INTI", None))
     # retranslateUi
 
