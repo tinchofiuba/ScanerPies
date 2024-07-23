@@ -9,6 +9,7 @@ from configIniciales import PerimetrosAMedir,listaCsv
 
 #defino variables a utilizar
 def extraccion(df0,dfLandmarks,operador,lugar,errorLandmarks):
+    print("emepzando")
     tamañoDato=8
     tamañoLandmark=8
     lZmin=[]

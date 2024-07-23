@@ -8,7 +8,7 @@ from ui_GUI import *
 import numpy as np
 from analisisPie import extraccion
 from configIniciales import notaInicial
-from multiprocessing import Process
+from multiprocessing import Process, freeze_support
 
 class MiVentana(QDialog):
     def __init__(self, parent=None):
@@ -58,6 +58,7 @@ class MiVentana(QDialog):
         if len(self.archivosLandmarks)<=numCores:
             for i in range(len(self.archivosLandmarks)):
                 p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i],operador,lugar,1))
+                print("processing!")
                 p.start()   
                 self.listaProcesos.append(p)
             for proceso in self.listaProcesos:
@@ -168,7 +169,7 @@ class MiVentana(QDialog):
                     print(len(df))
                     self.limpiarDatos(df)
                     print(len(df))
-            if "landmark" in nombreArchivo:
+            if "landmark" in nombreArchivo: 
                 if len(df)!=self.largoLandmarks:
                         lineaDeError="ay una cantidad de Landmarks distinta a la esperada"
                         if errores==0:
@@ -218,10 +219,8 @@ class MiVentana(QDialog):
                     dirArchivoScaneo=self.direccionXYZ+self.archivoScaneo
                     self.listaArchivosParaEscanear.append(dirArchivoScaneo)
                     if not os.path.exists(dirArchivoScaneo):
-                        self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
-                        self.ui.label_2.setStyleSheet("color: red")
-                        self.ui.pushButton_3.setEnabled(False)
                         self.listaArchivosConError.append(self.nombreArchivo)
+                        erroresTotales=-1
                         self.listaErrores.append("No se encontró archivo de escaneo")
                     else:
                         erroresTotales,dictErr,dictDesc=self.chequeoDatos([archivo,dirArchivoScaneo],erroresTotales) 
@@ -256,7 +255,15 @@ class MiVentana(QDialog):
                     msg.setText("Errores en landmarks:\n"+textoLandmarks)
                 else:
                     msg.setText("Errores en landmarks:\n"+textoLandmarks+"\nErrores en escaneo:\n"+textoEscaneo)
+                    self.ui.label_2.setText("Hay errores en ambos archivos")
+                    self.ui.label_2.setStyleSheet("color: red")
+
                 msg.exec_()
+            elif erroresTotales==-1:
+                self.ui.label_2.setText("Hay archivos insuficientes, volver a cargar")
+                self.ui.label_2.setStyleSheet("color: red")
+                self.ui.pushButton_3.setEnabled(False)
+
             else:
                 self.ui.label_2.setText("Archivos cargados correctamente y sin errores")
                 self.ui.label_2.setStyleSheet("color: green")
@@ -271,8 +278,13 @@ class MiVentana(QDialog):
             msg.setText(texto)
             msg.exec_()
         
-if __name__ == "__main__":
+
+def main():
     app = QApplication(sys.argv)
     ventana = MiVentana()
     ventana.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    freeze_support()  
+    main()
