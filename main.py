@@ -2,7 +2,7 @@ import sys
 import os
 import json
 import pandas as pd
-from PySide2.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, QLabel
 from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
