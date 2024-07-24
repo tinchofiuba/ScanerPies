@@ -2,11 +2,11 @@ import sys
 import os
 import json
 import pandas as pd
+import time
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, QLabel
 from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
-from analisisPie import extraccion
 from configIniciales import notaInicial,PerimetrosAMedir,listaCsv
 from multiprocessing import Process, freeze_support
 import matplotlib.pyplot as plt
@@ -28,6 +28,8 @@ class MiVentana(QDialog):
         self.limpieza=0
         self.incluirLandmarks=0
         self.ploteo=0
+        self.lugar=""
+        self.operador=""
         self.guardarPlot=0
         self.dirCsv=""
         self.diccionarioErrores={}
@@ -67,11 +69,11 @@ class MiVentana(QDialog):
 
     def analisis(self):
         numCores=os.cpu_count()
-        operador=self.ui.comboBox.currentText()
-        lugar=self.ui.lineEdit.text()
+        self.operador=self.ui.comboBox.currentText()
+        self.lugar=self.ui.lineEdit.text()
         if len(self.archivosLandmarks)<=numCores:
             for i in range(len(self.archivosLandmarks)):
-                p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i],operador,lugar,self.ploteo,self.guardarPlot,self.incluirLandmarks,self.dirCsv))
+                p=Process(target=self.extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i]))
                 print("processing!")
                 p.start()   
                 self.listaProcesos.append(p)
@@ -360,6 +362,167 @@ class MiVentana(QDialog):
             msg.setWindowTitle("Error")
             msg.setText(texto)
             msg.exec_()
+
+    def extraccion(self,df0,dfLandmarks):
+        print("Empezando análisis")
+        tamañoDato=8
+        tamañoLandmark=8
+        lZmin=[]
+        lYmin=[]
+        MedidasPerim=[] 
+        xyz=["X","Y","Z"]
+        tag=df0.split('/')[-1].split('.')[0]
+        df0=np.round(pd.read_table(df0,skiprows=2,delim_whitespace=(True),names=xyz),1)
+        dfLandmarks=np.round(pd.read_table(dfLandmarks,delim_whitespace=(True),names=xyz),1)
+
+        dfMedicion=pd.DataFrame(columns=listaCsv)
+        #guardo la fecha y hora de la medicion
+        dfMedicion.at[0,'FECHA']=time.strftime("%d/%m/%Y %H:%M:%S")
+        dfMedicion.at[0,'USUARIO']=self.operador
+        dfMedicion.at[0,'LUGAR']=self.self
+        df=df0.copy()
+        for v in xyz: #me fijo si hay valores negativos, si es así llevo todos los valores a positivos
+            minv=df[v].min()   
+            if minv<0:
+                df[v]=df[v]+np.abs(minv)  
+                dfLandmarks[v]=dfLandmarks[v]+np.abs(minv)
+            else:
+                df[v]=df[v]-minv
+                dfLandmarks[v]=dfLandmarks[v]-minv
+        #------------------------------------------------------------------------------
+        minx=df['X'].min()
+        maxx=df['X'].max()
+        miny=df['Y'].min()
+        maxy=df['Y'].max()
+        minz=df['Z'].min()
+        maxz=df['Z'].max()
+        #---------------------MEDICIONES----------------------------------------------
+        #ENCUENTRO:
+        #1-EL TIPO DE PIE
+        #2-EL ALTO DE LA PUNTA DEL PIE
+        #3-LA ALTURA A LA MITAD DEL PIE
+        #4-EL TIPO DE PIE
+        #5-SI EL PIE ES IZQ O DERECHO
+        listaLandmarksDedos=[7,8,20,21,9]
+        dfDedoscopia,dfMedicion,izqOder=tipoPie(df,listaLandmarksDedos,dfLandmarks,tamañoLandmark,dfMedicion) 
+        #------------------------------------------------------------------------------
+        #ENCUENTRO:
+        #1-EL ANCHO METATARSIANO (el diagonal)
+        #2-LA ALTURA MÁXIMA DEL METATARSO
+        #3-LA ALTURA A LA MITAD DEL PIE
+        #4-EL TIPO DE PIE
+        #5-SI EL PIE ES IZQ O DERECHO
+        iniMetaTarso,finMetaTarso,dfMedicion=Metatarso(df,maxx,maxy,izqOder,dfMedicion) #encuentro los puntos del metatarso, parte interna y externa
+        dfInMetaTarso=pd.DataFrame([iniMetaTarso],columns=xyz)
+        dfFinMetaTarso=pd.DataFrame([finMetaTarso],columns=xyz)
+        #------------------------------------------------------------------------------
+        #ENCUENTRO LA ALTURA DEL TALON Y EL VALOR DE "X" DE ESE PUNTO
+        #ESTE VALOR DE "X" LO USO COMO SIMETRÍA EN EL EJE "Y"
+        xAlturaMaxTalon,AlturaMaxTalon,dfMedicion=alturaTalon(df,miny,dfMedicion)
+        arrayAlturaTalon=[xAlturaMaxTalon,0,AlturaMaxTalon]#<--------------------array alturaTalon
+        dfAlturaTalon=pd.DataFrame([arrayAlturaTalon],columns=xyz)
+        #------------------------------------------------------------------------------
+        #ENCUENTRO:
+        #1-EL LARGO DEL PIE
+        #2-EL ANCHO TOTAL DEL PIE
+        #3-LA ALTURA DE LA ENTRADA DEL PIE
+        arrayEntradaPie,dfEntradaPie,dfMedicion=largoAnchoEntrada(df,dfLandmarks,maxy,miny,maxx,minx,xyz,dfMedicion)
+        #------------------------------------------------------------------------------
+        arrayCentroTobillo=dfLandmarks.iloc[12]
+        distanciaEntrada_Talon=norma(arrayEntradaPie,arrayAlturaTalon)#<--------------------distancia entre la entrada del pie y el talón
+        dfMedicion.at[0,'LARGO TALON-ENTRADA']=np.round(distanciaEntrada_Talon,1)
+        arrayAlturaEmpeine=dfLandmarks.iloc[6]
+        Zempieine=df[df['Y']==arrayAlturaEmpeine['Y']]['Z'].max()
+        Xempeine=df[(df['Y']==arrayAlturaEmpeine['Y']) & (df['Z']==Zempieine)]['X'].mean()
+        arrayAlturaEmpeine['Z']=Zempieine
+        arrayAlturaEmpeine['X']=Xempeine
+
+        dfEmpeine=pd.DataFrame([arrayAlturaEmpeine],columns=xyz)
+        dfMedicion.at[0,'ALTURA EMPEINE']=np.round(Zempieine,1)
+        arrayAlturaArco=dfLandmarks.iloc[5]['Z']
+        dfMedicion.at[0,'ALTURA ARCO']=np.round(arrayAlturaArco,1)
+        yInicioTalon,zInicioTalon=InicioTalon(df,lZmin,lYmin,AlturaMaxTalon,arrayCentroTobillo['Y'])
+        arrayInicioTalon=[xAlturaMaxTalon,yInicioTalon,0]#<--------------------array arrayInicioTalon
+        distanciaEmpeineTalon=norma(arrayAlturaEmpeine,arrayAlturaTalon)#<--------------------distancia entre el empeine y el talón
+        dfMedicion.at[0,'LARGO TALON-EMPEINE']=np.round(distanciaEmpeineTalon,1)
+        distanciaEmpeineInicioTalon=norma(arrayAlturaEmpeine,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
+        dfMedicion.at[0,'LARGO INICIO TALON-EMPEINE']=np.round(distanciaEmpeineInicioTalon,1)
+        distanciaEntrada_IniciTalon=norma(arrayEntradaPie,arrayInicioTalon)#<--------------------distancia entre el empeine y el inicio del talón
+        dfMedicion.at[0,'LARGO INICIO TALON-ENTRADA']=np.round(distanciaEntrada_IniciTalon,1)
+
+        df['TIPO']='DATO'
+        df['TAMAÑO']=tamañoDato
+        dfInicioTalon=pd.DataFrame([arrayInicioTalon],columns=xyz)
+        dfInicioTalon['TIPO']='INICIO TALON'
+        dfInicioTalon['TAMAÑO']=tamañoLandmark
+        df=pd.concat([df,dfInicioTalon],ignore_index=True)
+        #--------------------------------------------------------------
+        dfEntradaPie=pd.DataFrame([arrayEntradaPie],columns=xyz)
+        dfEntradaPie['TIPO']='ENTRADA PIE'
+        dfEntradaPie['TAMAÑO']=tamañoLandmark
+        df=pd.concat([df,dfEntradaPie],ignore_index=True)
+        #--------------------------------------------------------------
+        dfAlturaTalon=pd.DataFrame([arrayAlturaTalon],columns=xyz)
+        dfAlturaTalon['TIPO']='ALTURA TALON'
+        dfAlturaTalon['TAMAÑO']=tamañoLandmark
+        df=pd.concat([df,dfAlturaTalon],ignore_index=True)
+
+        df=df.round(1)
+        dfLandmarks3=dfLandmarks.copy()
+        for i in range(len(dfLandmarks3)):
+            dfLandmarks3.at[i,'TIPO']=str(i)
+            dfLandmarks3.at[i,'TAMAÑO']=tamañoLandmark
+        dfLandmarks['TIPO']='LANDMARK'
+        dfLandmarks['TAMAÑO']=tamañoLandmark
+        dfLandmarks2=pd.DataFrame([dfLandmarks.iloc[7]],columns=xyz)
+        dfLandmarks2['TIPO']='LANDMARK'
+        dfLandmarks2['TAMAÑO']=tamañoLandmark
+
+        dfCircEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayEntradaPie,'PERIMETRO ENTRADA PIE',paso=0.6,plano='ZX') #medicion en el plano Zx del perimetro
+        dfCircEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,arrayAlturaEmpeine,'PERIMETRO EMPEINE',paso=0.6,plano='ZX') #medicion en el plano Zx del perimetro
+        dfcircMetaTarso,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInMetaTarso,dfFinMetaTarso],'PERIMETRO METATARSO',diagonal=True,paso=0.4,plano='ZX') #medicion en el plano Zx del perimetro
+        dfCircTalonEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfAlturaTalon,dfEntradaPie],'PERIMETRO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+        dfCircInTalonEntrada,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEntradaPie],'PERIMETRO INICIO TALON - ENTRADA PIE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+        dfCircTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfAlturaTalon,dfEmpeine],'PERIMETRO TALON - EMPEINE',paso=0.1,inclinado='YX') #medicion en el plano Zx del perimetro
+        dfCircInTalonEmpeine,MedidasPerim=medidaPerimetral(df,MedidasPerim,[dfInicioTalon,dfEmpeine],'PERIMETRO INICIO TALON - EMPEINE',paso=0.2,inclinado='YX') #medicion en el plano Zx del perimetro
+
+        for i in range(len(MedidasPerim)):
+            dfMedicion.at[0,PerimetrosAMedir[i]]=MedidasPerim[i]
+        try: #si el .csv existe lo abro y le agrego la medicion, sino lo creo
+            dfViejo=pd.read_csv('Mediciones.csv')
+            print(tag)
+            if tag in dfViejo['TAG'].values:
+                valores=dfViejo['TAG'].values
+                tags=np.unique([tagDuplicado for tagDuplicado in valores if tag in tagDuplicado])
+                lenTags=[len(tag) for tag in tags]
+                if len(tags)>1:
+                    tagMasLargo=tags[np.argmax(lenTags)]
+                    tag=tagMasLargo+".duplicado"
+                else:
+                    tag=tag+".duplicado"
+            dfMedicion.at[0,'TAG']=tag
+            dfMedicion=pd.concat([dfViejo,dfMedicion],ignore_index=True)
+            dfMedicion.to_csv(self.dirCsv+'/Mediciones.csv',index=False)
+        except:
+            dfMedicion.at[0,'TAG']=tag
+            dfMedicion.to_csv(self.dirCsv+'/Mediciones.csv',index=False)
+        if self.mostrarPlot==1:
+            if self.incluirLandmarks==1:
+                dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+            else:
+                dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+            fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
+            fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
+            fig.show()
+            
+        if self.guardarPlot==1:
+            #grafico el dfFinal con otro graficador que no sea plotly
+            if self.incluirLandmarks==1:
+                dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+            else:
+                dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+            fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
+            fig.write_html("grafico.html")
 
 def main():
     app = QApplication(sys.argv)
