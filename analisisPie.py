@@ -8,7 +8,7 @@ import time
 from configIniciales import PerimetrosAMedir,listaCsv
 
 #defino variables a utilizar
-def extraccion(df0,dfLandmarks,operador,lugar,mostrarPlot,guardarPlot):
+def extraccion(df0,dfLandmarks,operador,lugar,mostrarPlot,guardarPlot,incluirLandmarks,dirCsv):
     print("Empezando análisis")
     tamañoDato=8
     tamañoLandmark=8
@@ -147,21 +147,27 @@ def extraccion(df0,dfLandmarks,operador,lugar,mostrarPlot,guardarPlot):
                 tag=tag+".duplicado"
         dfMedicion.at[0,'TAG']=tag
         dfMedicion=pd.concat([dfViejo,dfMedicion],ignore_index=True)
-        dfMedicion.to_csv('Mediciones.csv',index=False)
+        dfMedicion.to_csv(dirCsv+'/Mediciones.csv',index=False)
     except:
         dfMedicion.at[0,'TAG']=tag
-        dfMedicion.to_csv('Mediciones.csv',index=False)
-    if mostrarPlot==True:
-        #dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
-        dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        dfMedicion.to_csv(dirCsv+'/Mediciones.csv',index=False)
+    if mostrarPlot==1:
+        if incluirLandmarks==1:
+            dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        else:
+            dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
         fig=px.scatter_3d(dfFinal,x='X',y='Y',z='Z',color='TIPO',size='TAMAÑO',size_max=13)
         fig.update_layout(scene=dict(aspectratio=dict(x=1.1, y=3.1, z=1),))
         fig.show()
         
-        if guardarPlot==True:
-            #grafico el dfFinal con otro graficador que no sea plotly
-            fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
-            fig.write_html("grafico.html")
+    if guardarPlot==1:
+        #grafico el dfFinal con otro graficador que no sea plotly
+        if incluirLandmarks==1:
+            dfFinal=pd.concat([df,dfLandmarks3,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        else:
+            dfFinal=pd.concat([df,dfDedoscopia,dfCircEntrada,dfCircEmpeine,dfcircMetaTarso,dfCircTalonEntrada,dfCircInTalonEntrada,dfCircTalonEmpeine,dfCircInTalonEmpeine],ignore_index=True)
+        fig = go.Figure(data=[go.Scatter3d(x=dfFinal['X'], y=dfFinal['Y'], z=dfFinal['Z'],mode='markers',marker=dict(size=3,color='blue'))])
+        fig.write_html("grafico.html")
             
 
 #solo ejecuto esto cuando corro este script, sino no
@@ -171,5 +177,5 @@ if __name__ == "__main__":
     xyz=["X","Y","Z"]
     df0=np.round(pd.read_table(escaneo,skiprows=2,delim_whitespace=(True),names=xyz),1)
     dfLandmarks=np.round(pd.read_table(Landmarks,delim_whitespace=(True),names=xyz),1)
-    extraccion(df0,dfLandmarks)
+    extraccion(df0,dfLandmarks,'OPERADOR','LUGAR',1,0,0,"")
 

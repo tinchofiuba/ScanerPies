@@ -7,20 +7,29 @@ from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
 from analisisPie import extraccion
-from configIniciales import notaInicial
+from configIniciales import notaInicial,PerimetrosAMedir,listaCsv
 from multiprocessing import Process, freeze_support
-
-
-11111 Me falta direccionar las funciones de guardar plot y de mostrar plot!!!
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from funcionesPie import InicioTalon,norma,medidaPerimetral,Metatarso,tipoPie,alturaTalon,largoAnchoEntrada
 
 class MiVentana(QDialog):
     def __init__(self, parent=None):
         super(MiVentana, self).__init__(parent)
+        #hago que la ventana no pueda ser maximizada ni minimizada
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, False)
+        #ni que se pueda agrandar o achicar con el mouse
+        self.setFixedSize(400, 300)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle("Extracción de medidas - Scanner corporal") #titulo de la ventana
         self.setWindowIcon(QIcon('icono/3D.jpg')) #le cambio el icono a la ventana
         self.limpieza=0
+        self.incluirLandmarks=0
+        self.ploteo=0
+        self.guardarPlot=0
+        self.dirCsv=""
         self.diccionarioErrores={}
         self.diccionariosDescripciones={}
         self.direccionDeGuardado = os.getcwd()
@@ -43,7 +52,8 @@ class MiVentana(QDialog):
         self.ui.pushButton.clicked.connect(lambda: self.cargarArchivos()) 
         self.ui.pushButton_3.clicked.connect(lambda: self.analisis())
         self.ui.checkBox.stateChanged.connect(lambda: self.chequeoBotones("checkbox"))
-                             
+        self.ui.checkBox_2.stateChanged.connect(lambda: self.chequeoBotones("checkbox2"))
+        self.ui.checkBox_3.stateChanged.connect(lambda: self.chequeoBotones("checkbox3"))                   
         #coloco la imagen con nombre "INTI.jpg" en wl Qlabel
         self.label_Imagen = QLabel(self)
         self.label_Imagen.setGeometry(10, 160, 130, 130)
@@ -61,7 +71,7 @@ class MiVentana(QDialog):
         lugar=self.ui.lineEdit.text()
         if len(self.archivosLandmarks)<=numCores:
             for i in range(len(self.archivosLandmarks)):
-                p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i],operador,lugar,1))
+                p=Process(target=extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i],operador,lugar,self.ploteo,self.guardarPlot,self.incluirLandmarks,self.dirCsv))
                 print("processing!")
                 p.start()   
                 self.listaProcesos.append(p)
@@ -114,13 +124,30 @@ class MiVentana(QDialog):
                 self.ui.pushButton.setEnabled(True)
             else:
                 self.ui.pushButton.setEnabled(False)
-        elif tipo=="checkbox":
-            if self.ui.checkBox.isChecked():
-                self.ui.checkBox_2.setEnabled(True)
-                self.ui.checkBox_3.setEnabled(True)
+        elif "checkbox" in tipo:
+            if "2" in tipo:
+                if self.ui.checkBox_2.isChecked():
+                    self.guardarPlot=1
+                else:
+                    self.guardarPlot=0
+            elif "3" in tipo:
+                if self.ui.checkBox_3.isChecked():
+                    self.incluirLandmarks=1
+                else:
+                    self.incluirLandmarks=0
             else:
-                self.ui.checkBox_2.setEnabled(False)
-                self.ui.checkBox_3.setEnabled(False)
+                if self.ui.checkBox.isChecked():
+                    self.ui.checkBox_2.setEnabled(True)
+                    self.ui.checkBox_3.setEnabled(True)
+                    self.ploteo=1
+                    self.incluirLandmarks=0
+                    self.guardarPlot=0
+                else:
+                    self.ui.checkBox_2.setEnabled(False)
+                    self.ui.checkBox_3.setEnabled(False)
+                    self.ploteo=0
+                    self.incluirLandmarks=0
+                    self.guardarPlot=0
 
     def guardarLugar(self):
         with open('back.json') as f:
@@ -135,8 +162,8 @@ class MiVentana(QDialog):
             with open('back.json') as f:
                 data = json.load(f)
             if 'direccionCsv' in data:
-                direccionCsv = data['direccionCsv'] if data['direccionCsv'] else self.direccionDeGuardado
-                self.ui.label_3.setText(direccionCsv)
+                self.dirCsv = data['direccionCsv'] if data['direccionCsv'] else self.direccionDeGuardado
+                self.ui.label_3.setText(self.dirCsv)
             if data.get('operador'):
                 self.ui.comboBox.setCurrentText(data['operador'])
             if data.get('lugar'):
@@ -157,13 +184,13 @@ class MiVentana(QDialog):
                     else:
                         self.ui.pushButton_6.setText(data["BotonPag2"]["tag"])
 
-
     def cambiarDireccionCsv(self):
-        direccionDeGuardado = QFileDialog.getExistingDirectory()
-        self.ui.label_3.setText(direccionDeGuardado)
+        self.dirCsv = QFileDialog.getExistingDirectory()
+        if self.dirCsv=="":
+            self.ui.label_3.setText(self.dirCsv)
         with open('back.json') as f:
             data = json.load(f)
-        data['direccionCsv'] = direccionDeGuardado
+        data['direccionCsv'] = self.dirCsv
         with open('back.json', 'w') as f:
             json.dump(data, f)
 
