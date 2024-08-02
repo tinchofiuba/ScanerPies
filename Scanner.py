@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox, QLa
 from PyQt5.QtGui import QPixmap
 from ui_GUI import *
 import numpy as np
+from analisisPie import extraccion
 from configIniciales import notaInicial,PerimetrosAMedir,listaCsv
 from multiprocessing import Process, freeze_support
 import matplotlib.pyplot as plt
@@ -71,6 +72,9 @@ class MiVentana(QDialog):
         numCores=os.cpu_count()
         self.operador=self.ui.comboBox.currentText()
         self.lugar=self.ui.lineEdit.text()
+        #guardo un archivo de los landarks utilizados del tipo .json
+        #en este archivo se pueden guardar los datos de los landmarks
+        
         if len(self.archivosLandmarks)<=numCores:
             for i in range(len(self.archivosLandmarks)):
                 p=Process(target=self.extraccion,args=(self.listaArchivosParaEscanear[i],self.archivosLandmarks[i]))
@@ -82,6 +86,25 @@ class MiVentana(QDialog):
         else:
             numCiclos=len(self.archivosLandmarks)//numCores
             archivosResiduales=len(self.archivosLandmarks)%numCores
+            #borro el archivo de landmarks.json para generar uno nuevo"
+            if os.path.exists('landmarks.json'):
+                os.remove('landmarks.json') 
+            with open('landmarks.json', 'r') as file:
+                data = json.load(file)
+            for i in range(len(self.archivosLandmarks)):
+                df=pd.read_table(self.archivosLandmarks,skiprows=None,delim_whitespace=(True),names=["X","Y","Z"])
+                lDedos=[df.iloc[i] for i in [7,8,20,21,9]]
+                dedos={"{i+1}":dedo for i,dedo in enumerate(lDedos)}
+                empeine=df.iloc[6]
+                entrada=
+                alturaArco=df.iloc[5]  
+                diccLandmarks={"landmark1":{"dedos":dedos, "empeine":empeine, "entrada":entrada, "alturaArco":alturaArco}}
+                data.update
+                with open('landmarks.json', 'W') as file:
+                    data = json.load(file)
+                
+
+                    
             for ciclo in range(numCiclos):
                 if ciclo==numCiclos-1:
                     lenArchivos=archivosResiduales
