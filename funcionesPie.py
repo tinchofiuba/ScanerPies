@@ -63,7 +63,7 @@ def izqOder(df,dflandmarks):
   return lado
 
 def Metatarso(df,maxx,maxy,izqOder,dfMedicion):
-  minx=df[df['Y']>maxy/2]['X'].min()
+  minx=df[df['Y']>maxy/3]['X'].min()
   maxyMetatarzoIn=df[df['X']==minx]['Y'].max()
   maxzMetatarzoIn=df[(df['X']==minx) & (df['Y']==maxyMetatarzoIn)]['Z'].max()
   iniMetaTarso=[minx,maxyMetatarzoIn,maxzMetatarzoIn]#<--------------------vector inicio del metatarzo, izquierda
